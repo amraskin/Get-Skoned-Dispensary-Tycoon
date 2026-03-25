@@ -19,14 +19,16 @@ class Customer {
     const name    = CUSTOMER_NAMES[Math.floor(Math.random() * CUSTOMER_NAMES.length)];
     const cat     = Object.keys(PRODUCTS)[Math.floor(Math.random() * Object.keys(PRODUCTS).length)];
 
-    this.id           = id;
-    this.name         = name;
-    this.typeDef      = typeDef;
-    this.type         = typeDef.type;
-    this.category     = cat;
-    this.state        = CustomerState.ENTERING;
-    this.dialogue     = this.pickDialogue(typeDef.type);
-    this.satisfied    = false;
+    this.id            = id;
+    this.name          = name;
+    this.typeDef       = typeDef;
+    this.type          = typeDef.type;
+    this.category      = cat;
+    this.state         = CustomerState.ENTERING;
+    this.dialogue      = this.pickDialogue(typeDef.type);
+    this.vagueDialogue = this.pickVagueDialogue(typeDef.type);
+    this.effectHint    = this.pickEffectHint(cat);
+    this.satisfied     = false;
     this.declined     = false;
     this.patience     = 100; // 0–100; drops if ignored
 
@@ -69,6 +71,16 @@ class Customer {
     return lines[Math.floor(Math.random() * lines.length)];
   }
 
+  pickVagueDialogue(type) {
+    const lines = CUSTOMER_VAGUE_DIALOGUES[type] || CUSTOMER_VAGUE_DIALOGUES.curious;
+    return lines[Math.floor(Math.random() * lines.length)];
+  }
+
+  pickEffectHint(cat) {
+    const hints = CATEGORY_EFFECT_HINTS[cat] || [];
+    return hints[Math.floor(Math.random() * hints.length)] || 'Just looking for something good.';
+  }
+
   pickSkinTone() {
     const tones = ['#FFDAB0', '#F0C090', '#D4A068', '#C08040', '#8B5520'];
     return tones[Math.floor(Math.random() * tones.length)];
@@ -94,7 +106,7 @@ class Customer {
         if (Math.abs(this.x - this.targetX) < 4) {
           this.x     = this.targetX;
           this.state = CustomerState.WAITING;
-          this.showSpeech(this.dialogue, 3000);
+          this.showSpeech(this.vagueDialogue, 3500);
         }
         break;
 
