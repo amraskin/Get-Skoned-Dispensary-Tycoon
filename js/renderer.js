@@ -12,6 +12,10 @@ class StoreRenderer {
     this.time   = 0;         // for animations
     this.moneyParticles = [];
     this.floatTexts     = [];
+
+    // Preload the real Skones logo for the chalkboard wall
+    this.logoImg = new Image();
+    this.logoImg.src = 'img/logo.png';
   }
 
   // ─── Main render ──────────────────────────────────────────
@@ -242,34 +246,49 @@ class StoreRenderer {
   }
 
   drawNeonSign(cx, cy) {
-    const { ctx, time } = this;
+    const { ctx, time, logoImg } = this;
     const pulse = 0.85 + 0.15 * Math.sin(time * 1.5);
 
     ctx.save();
 
-    // Outer glow
-    ctx.shadowColor  = CONFIG.colors.neonGlow;
-    ctx.shadowBlur   = 28 * pulse;
+    if (logoImg.complete && logoImg.naturalWidth > 0) {
+      // ── Real logo with neon-green tint + glow ──
+      const logoW = 300;
+      const logoH = logoW * (logoImg.naturalHeight / logoImg.naturalWidth);
+      const lx    = cx - logoW / 2;
+      const ly    = cy - logoH / 2;
 
-    // Border ring
-    ctx.strokeStyle = `rgba(140, 255, 30, ${0.7 * pulse})`;
-    ctx.lineWidth   = 3;
-    ctx.beginPath();
-    ctx.ellipse(cx, cy, 145, 36, 0, 0, Math.PI * 2);
-    ctx.stroke();
+      // Glow via shadow (applied before drawing)
+      ctx.shadowColor = `rgba(140, 255, 30, ${0.9 * pulse})`;
+      ctx.shadowBlur  = 22 * pulse;
 
-    // Inner text
-    ctx.font = `bold 32px 'Arial Black', Arial`;
-    ctx.fillStyle = `rgba(185, 255, 50, ${pulse})`;
-    ctx.textAlign  = 'center';
-    ctx.textBaseline = 'middle';
+      // Tint white logo pixels to neon green using compositing:
+      // 1. Draw logo normally (white on transparent)
+      ctx.globalAlpha = pulse;
+      ctx.filter = `sepia(1) saturate(6) hue-rotate(55deg) brightness(${0.95 + 0.15 * pulse})`;
+      ctx.drawImage(logoImg, lx, ly, logoW, logoH);
 
-    // Shadow layers for neon look
-    ctx.shadowColor = `rgba(120, 255, 10, ${0.9 * pulse})`;
-    ctx.shadowBlur  = 18;
-    ctx.fillText('GET SKONED', cx, cy);
-    ctx.shadowBlur  = 8;
-    ctx.fillText('GET SKONED', cx, cy);
+      // 2. Second pass — stronger glow layer at lower alpha
+      ctx.filter = `sepia(1) saturate(8) hue-rotate(55deg) brightness(1.4)`;
+      ctx.globalAlpha = 0.25 * pulse;
+      ctx.shadowBlur  = 35 * pulse;
+      ctx.drawImage(logoImg, lx, ly, logoW, logoH);
+    } else {
+      // ── Fallback text sign while image loads ──
+      ctx.shadowColor = CONFIG.colors.neonGlow;
+      ctx.shadowBlur  = 28 * pulse;
+      ctx.strokeStyle = `rgba(140, 255, 30, ${0.7 * pulse})`;
+      ctx.lineWidth   = 3;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, 145, 36, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.font         = `bold 32px 'Arial Black', Arial`;
+      ctx.fillStyle    = `rgba(185, 255, 50, ${pulse})`;
+      ctx.textAlign    = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.shadowBlur   = 18;
+      ctx.fillText('SKONES', cx, cy);
+    }
 
     ctx.restore();
   }

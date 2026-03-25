@@ -84,6 +84,16 @@ class Game {
       if (window.musicPlayer) window.musicPlayer.toggle();
     });
 
+    // How to Play — from the main menu
+    document.getElementById('btn-howtoplay-menu')?.addEventListener('click', () => {
+      this.ui.renderHowToPlay('menu');
+    });
+
+    // How to Play — from the HUD (during gameplay)
+    document.getElementById('btn-howtoplay-hud')?.addEventListener('click', () => {
+      this.ui.renderHowToPlay('game');
+    });
+
     this._raf = requestAnimationFrame(this._loop);
   }
 
@@ -231,6 +241,20 @@ class Game {
     const product = Object.values(PRODUCTS).flat().find(p => p.id === productId);
     if (!product) return;
 
+    // Wrong category — customer walks out angry
+    const productCat = Object.keys(PRODUCTS).find(cat => PRODUCTS[cat].some(p => p.id === productId));
+    if (productCat !== customer.category) {
+      const wantedMeta = CATEGORY_META[customer.category];
+      this.ui.showNotification(
+        `😤 <strong>${customer.name}</strong> wanted ${wantedMeta.icon} ${wantedMeta.label} — they're leaving!`,
+        'error'
+      );
+      customer.serve(false);
+      this._maybeShowReview(false, 0.55);
+      this._finishSale(customer, null, null);
+      return;
+    }
+
     const isUpsell    = product.price > customer.budget;
     let   productSold = false;
     let   addonSold   = false;
@@ -255,6 +279,7 @@ class Game {
         'warning'
       );
       customer.serve(false);
+      this._maybeShowReview(false, 0.20);
       this._finishSale(customer, null, null);
       return;
     }
@@ -323,6 +348,7 @@ class Game {
 
     this.ui.showNotification(msg, 'success');
     this._playTone(isUpsell ? 880 : 660);
+    this._maybeShowReview(true, 0.38);
 
     customer.serve(true);
     this._finishSale(customer, product, addonSold ? ADDONS.find(a => a.id === addonId) : null);
@@ -331,6 +357,12 @@ class Game {
   skipCustomer(customer) {
     customer.serve(false);
     this._finishSale(customer, null, null);
+  }
+
+  _maybeShowReview(happy, chance = 0.35) {
+    if (Math.random() < chance) {
+      this.ui.showReview(happy ? 5 : 1);
+    }
   }
 
   _finishSale(customer, product, addon) {

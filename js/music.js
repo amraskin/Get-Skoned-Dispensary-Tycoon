@@ -1,10 +1,18 @@
 // ============================================================
 //  GET SKONED — music.js
-//  Plays "Because I Got High" — Afroman (YouTube: WeYsTmIzjkw)
+//  Playlist (loops continuously):
+//    1. "Because I Got High"  — Afroman       (WeYsTmIzjkw)
+//    2. "Lemon Pound Cake"    — Afroman       (9xxK5yyecRo)
 //
 //  IMPORTANT: Must run via the local server (start_game.command)
 //  YouTube's API is blocked on file:// URLs.
 // ============================================================
+
+// Song order — add more IDs here to extend the playlist
+const PLAYLIST = [
+  'WeYsTmIzjkw',   // Because I Got High — Afroman
+  '9xxK5yyecRo',   // Lemon Pound Cake   — Afroman
+];
 
 class MusicPlayer {
   constructor() {
@@ -13,6 +21,7 @@ class MusicPlayer {
     this.ready        = false;
     this.volume       = 65;          // 0–100
     this._pendingPlay = false;
+    this._trackIndex  = 0;           // which song is playing
     this._onFile      = window.location.protocol !== 'file:';  // true = served via http
   }
 
@@ -33,11 +42,12 @@ class MusicPlayer {
       this.player = new YT.Player('yt-player', {
         height:  '1',
         width:   '1',
-        videoId: 'WeYsTmIzjkw',         // "Because I Got High" — Afroman
+        videoId: PLAYLIST[0],
         playerVars: {
           autoplay:       0,
           loop:           1,
-          playlist:       'WeYsTmIzjkw', // required so loop works
+          // Pass full playlist so the API cycles through all tracks
+          playlist:       PLAYLIST.join(','),
           controls:       0,
           disablekb:      1,
           fs:             0,
@@ -57,11 +67,13 @@ class MusicPlayer {
             }
           },
           onError: (e) => {
-            console.warn('[Music] YouTube player error code:', e.data);
+            // If a track errors (e.g. not embeddable), skip to the next one
+            console.warn('[Music] YouTube player error code:', e.data, '— skipping track');
+            if (this.playing) this._nextTrack();
           },
           onStateChange: (e) => {
-            // ENDED (0) — loop should handle it, but force replay just in case
-            if (e.data === 0 && this.playing) this.player.playVideo();
+            // ENDED (0) — advance to next track manually as a fallback
+            if (e.data === 0 && this.playing) this._nextTrack();
           },
         },
       });
@@ -108,6 +120,13 @@ class MusicPlayer {
   setVolume(v) {
     this.volume = Math.round(Math.max(0, Math.min(100, v)));
     if (this.ready && this.player) this.player.setVolume(this.volume);
+  }
+
+  // ─── Advance to next track (wraps around) ─────────────────
+  _nextTrack() {
+    if (!this.ready || !this.player) return;
+    this._trackIndex = (this._trackIndex + 1) % PLAYLIST.length;
+    this.player.loadVideoById(PLAYLIST[this._trackIndex]);
   }
 
   // ─── UI helpers ───────────────────────────────────────────

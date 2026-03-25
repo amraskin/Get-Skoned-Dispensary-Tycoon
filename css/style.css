@@ -61,13 +61,11 @@ body {
 }
 
 .hud-logo {
-  font-size: 18px;
-  font-weight: 900;
-  color: #B8FF40;
-  letter-spacing: 1px;
-  text-shadow: 0 0 8px rgba(140,255,20,0.7);
-  margin-right: 16px;
+  height: 28px;
+  width: auto;
+  margin-right: 14px;
   flex-shrink: 0;
+  opacity: 0.90;
 }
 
 .hud-sep {
@@ -134,21 +132,30 @@ body {
   gap: 24px;
 }
 
-.menu-neon {
-  font-size: 52px;
-  font-weight: 900;
-  color: #C8FF50;
-  text-shadow:
-    0 0 10px rgba(140,255,20,0.8),
-    0 0 30px rgba(140,255,20,0.5),
-    0 0 60px rgba(100,200,10,0.3);
-  letter-spacing: 4px;
-  animation: neonPulse 3s ease-in-out infinite;
+/* Real logo image — neon green pulsing glow */
+.menu-logo {
+  width: 260px;
+  height: auto;
+  flex-shrink: 0;
+  animation: logoNeonPulse 3s ease-in-out infinite;
+}
+
+@keyframes logoNeonPulse {
+  0%, 100% {
+    opacity: 1;
+    filter: sepia(1) saturate(6) hue-rotate(55deg) brightness(1.15)
+            drop-shadow(0 0 8px rgba(140,255,20,0.9)) drop-shadow(0 0 22px rgba(140,255,20,0.55));
+  }
+  50% {
+    opacity: 0.88;
+    filter: sepia(1) saturate(5) hue-rotate(55deg) brightness(1.05)
+            drop-shadow(0 0 4px rgba(140,255,20,0.55)) drop-shadow(0 0 14px rgba(140,255,20,0.3));
+  }
 }
 
 @keyframes neonPulse {
-  0%, 100% { opacity: 1; text-shadow: 0 0 10px rgba(140,255,20,0.8), 0 0 30px rgba(140,255,20,0.5), 0 0 60px rgba(100,200,10,0.3); }
-  50%       { opacity: 0.85; text-shadow: 0 0 6px rgba(140,255,20,0.6), 0 0 20px rgba(140,255,20,0.3), 0 0 40px rgba(100,200,10,0.2); }
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.85; }
 }
 
 .menu-sub {
@@ -859,7 +866,7 @@ button, .product-card, .addon-card, .vendor-card,
     padding: 0 10px;
     gap: 0;
   }
-  .hud-logo  { font-size: 14px; margin-right: 8px; }
+  .hud-logo  { height: 20px; margin-right: 8px; }
   .hud-sep   { margin: 0 7px; }
   .hud-item  { min-width: 56px; }
   .hud-label { font-size: 8px; }
@@ -913,3 +920,356 @@ button, .product-card, .addon-card, .vendor-card,
 .marketing-grid {
   -webkit-overflow-scrolling: touch;
 }
+
+
+/* ============================================================
+   HOW TO PLAY PANEL
+   ============================================================ */
+
+/* Full-screen overlay */
+#panel-howtoplay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 85;
+  overflow: hidden;
+}
+
+/* Scrollable card */
+.htp-container {
+  background: #FAFAF8;
+  border-radius: 16px;
+  width: 880px;
+  max-height: 94%;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+  overflow: hidden;
+}
+
+/* Sticky header */
+.htp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 28px 14px;
+  border-bottom: 2px solid #2A6040;
+  background: #F4FBF6;
+  flex-shrink: 0;
+}
+.htp-title {
+  font-size: 22px;
+  font-weight: 900;
+  color: #1A1A1A;
+}
+
+/* Scrollable body */
+.htp-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 0 28px 12px;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Sticky footer */
+.htp-footer {
+  padding: 14px 28px;
+  border-top: 1px solid #E8E4E0;
+  background: #F4FBF6;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Section blocks */
+.htp-section {
+  padding: 18px 0 4px;
+  border-bottom: 1px solid #EEEBE6;
+}
+.htp-section:last-child { border-bottom: none; }
+
+.htp-section-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #2A6040;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 10px;
+}
+
+.htp-text {
+  font-size: 13.5px;
+  color: #333;
+  line-height: 1.65;
+}
+
+/* Numbered steps */
+.htp-steps { display: flex; flex-direction: column; gap: 8px; }
+.htp-step  {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 13px;
+  color: #333;
+  line-height: 1.5;
+}
+.htp-step-num {
+  background: #2A6040;
+  color: #fff;
+  font-weight: 800;
+  font-size: 12px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* Customer type cards */
+.htp-customers {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-top: 8px;
+}
+.htp-customer-card {
+  background: #fff;
+  border: 2px solid #ccc;
+  border-radius: 10px;
+  padding: 12px 10px;
+  text-align: center;
+}
+.htp-cust-emoji { font-size: 26px; margin-bottom: 4px; }
+.htp-cust-name  { font-size: 12px; font-weight: 800; margin-bottom: 5px; }
+.htp-cust-desc  { font-size: 11px; color: #555; line-height: 1.4; margin-bottom: 6px; }
+.htp-cust-stat  { font-size: 11px; color: #666; }
+
+/* Products grid */
+.htp-products-grid { display: flex; flex-direction: column; gap: 7px; }
+.htp-prod-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  color: #333;
+  line-height: 1.4;
+}
+.htp-prod-icon { font-size: 20px; flex-shrink: 0; width: 28px; text-align: center; }
+
+/* Vendor list */
+.htp-vendor-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.htp-vendor-row  {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  color: #333;
+  line-height: 1.45;
+}
+.htp-vendor-row span { font-size: 20px; flex-shrink: 0; width: 28px; text-align: center; }
+
+/* Tips */
+.htp-tip {
+  background: #FFF8EC;
+  border-left: 3px solid #C86820;
+  border-radius: 0 8px 8px 0;
+  padding: 9px 12px;
+  font-size: 13px;
+  color: #444;
+  line-height: 1.5;
+  margin-top: 10px;
+}
+.htp-tips-section .htp-tip { margin-top: 8px; }
+
+/* ─── Menu "How to Play" link ─────────────────────────────── */
+.menu-howtoplay-link {
+  background: none;
+  border: 1.5px solid rgba(184,255,64,0.35);
+  color: rgba(184,255,64,0.75);
+  font-size: 14px;
+  padding: 8px 20px;
+  border-radius: 8px;
+  letter-spacing: 0.5px;
+  margin-top: -6px;
+  transition: all 0.2s;
+}
+.menu-howtoplay-link:hover {
+  background: rgba(184,255,64,0.08);
+  border-color: rgba(184,255,64,0.7);
+  color: #B8FF40;
+}
+
+/* ─── HUD "?" help button ─────────────────────────────────── */
+.hud-help-btn {
+  margin-left: 4px;
+  background: rgba(255,255,255,0.08);
+  border: 1.5px solid rgba(255,255,255,0.22);
+  border-radius: 50%;
+  color: rgba(255,255,255,0.7);
+  font-size: 14px;
+  font-weight: 800;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.hud-help-btn:hover {
+  background: rgba(255,255,255,0.2);
+  color: #fff;
+}
+
+/* ─── Mobile adjustments for How to Play ─────────────────── */
+@media (max-height: 420px) {
+  .htp-customers {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .htp-header { padding: 10px 16px 8px; }
+  .htp-title  { font-size: 17px; }
+  .htp-body   { padding: 0 16px 8px; }
+  .htp-footer { padding: 10px 16px; }
+  .htp-section-title { font-size: 13px; }
+  .htp-text   { font-size: 12px; }
+}
+
+/* ============================================================
+   CATEGORY TABS
+   ============================================================ */
+
+.sp-cat-tabs {
+  display: flex;
+  gap: 5px;
+  padding: 7px 12px 6px;
+  overflow-x: auto;
+  flex-shrink: 0;
+  scrollbar-width: none;
+  border-bottom: 1px solid #E0DAD4;
+  background: #F8F5F2;
+}
+.sp-cat-tabs::-webkit-scrollbar { display: none; }
+
+.sp-cat-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: 1.5px solid #D0C8C0;
+  border-radius: 20px;
+  background: #FFFFFF;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  color: #666;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.sp-cat-tab:hover            { border-color: #2A6040; color: #2A6040; }
+.sp-cat-tab.active           { border-color: #2A6040; background: #EDF7F1; color: #1A3A28; }
+.sp-cat-tab.wants            { border-color: #2A6040; }
+.sp-cat-tab.wants.active     { background: #2A6040; color: #FFFFFF; border-color: #1A4030; }
+
+.sp-cat-tab-icon  { font-size: 13px; }
+
+.sp-cat-wants-badge {
+  background: #B8FF40;
+  color: #1A3A10;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* ─── Wrong Category Warning Banner ─────────────────────── */
+.sp-wrong-cat-banner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: #FFF8E0;
+  border-bottom: 1px solid #E8C840;
+  font-size: 12px;
+  color: #7A4A10;
+  flex-shrink: 0;
+}
+
+/* ─── Mobile: compact tabs ───────────────────────────────── */
+@media (max-height: 420px) {
+  .sp-cat-tabs    { padding: 5px 8px 4px; gap: 3px; }
+  .sp-cat-tab     { padding: 3px 7px; font-size: 10px; }
+  .sp-cat-tab-label { display: none; }   /* icon only on tiny screens */
+  .sp-cat-tab-icon { font-size: 14px; }
+  .sp-cat-wants-badge { display: none; }
+  .sp-wrong-cat-banner { font-size: 10px; padding: 4px 10px; }
+}
+
+/* ============================================================
+   STAR REVIEW TOAST
+   ============================================================ */
+
+#panel-review {
+  position: absolute;
+  bottom: 56px;
+  left: 12px;
+  z-index: 210;
+  display: none;
+  animation: reviewSlideIn 0.3s ease;
+}
+
+@keyframes reviewSlideIn {
+  from { opacity: 0; transform: translateX(-16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.review-toast {
+  border-radius: 10px;
+  padding: 10px 14px;
+  max-width: 260px;
+  box-shadow: 0 3px 16px rgba(0,0,0,0.22);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.review-good {
+  background: #EDF7F1;
+  border: 1.5px solid #2A8A50;
+  color: #1A4A2A;
+}
+
+.review-bad {
+  background: #FFF0F0;
+  border: 1.5px solid #C04040;
+  color: #601010;
+}
+
+.review-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.review-stars { font-size: 13px; letter-spacing: 1px; }
+
+.review-name {
+  font-size: 10px;
+  font-weight: 600;
+  color: #999;
+}
+
+.review-msg { font-style: italic; }
