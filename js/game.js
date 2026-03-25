@@ -47,6 +47,9 @@ class Game {
     this.dayUpsells   = 0;
     this.dayAddons    = 0;
 
+    // ── Customer history ── tracks what each customer name bought
+    this.customerHistory = {};
+
     // ── Customer queue ──
     this.customers       = [];     // active on-screen customers
     this.customerQueue   = [];     // scheduled for current shift
@@ -221,8 +224,10 @@ class Game {
     setTimeout(() => {
       if (customer.state === CustomerState.AT_COUNTER) {
         this.state = GS.SERVING;
+        this._serviceStartTime = Date.now(); // start the service timer
         const unlockedProducts = this._buildUnlockedInventory();
-        this.ui.renderServicePanel(customer, unlockedProducts);
+        const history = this.customerHistory[customer.name] || null;
+        this.ui.renderServicePanel(customer, unlockedProducts, history);
       }
     }, 2200);  // 2.2 s — long enough to read the customer dialogue
   }
@@ -249,8 +254,11 @@ class Game {
         `😤 <strong>${customer.name}</strong> wanted ${wantedMeta.icon} ${wantedMeta.label} — they're leaving!`,
         'error'
       );
+      const prevH = this.customerHistory[customer.name] || { visits: 0 };
+      this.customerHistory[customer.name] = { ...prevH, satisfied: false, visits: (prevH.visits || 0) + 1 };
       customer.serve(false);
-      this._maybeShowReview(false, 0.55);
+      const elapsed1 = (Date.now() - (this._serviceStartTime || Date.now())) / 1000;
+      this._maybeShowReview(false, 0.55, elapsed1);
       this._finishSale(customer, null, null);
       return;
     }
@@ -278,8 +286,11 @@ class Game {
         `<strong>${customer.name}</strong> passed on the ${product.name}. Budget too tight!`,
         'warning'
       );
+      const prevH = this.customerHistory[customer.name] || { visits: 0 };
+      this.customerHistory[customer.name] = { ...prevH, satisfied: false, visits: (prevH.visits || 0) + 1 };
       customer.serve(false);
-      this._maybeShowReview(false, 0.20);
+      const elapsed2 = (Date.now() - (this._serviceStartTime || Date.now())) / 1000;
+      this._maybeShowReview(false, 0.20, elapsed2);
       this._finishSale(customer, null, null);
       return;
     }
@@ -348,7 +359,18 @@ class Game {
 
     this.ui.showNotification(msg, 'success');
     this._playTone(isUpsell ? 880 : 660);
-    this._maybeShowReview(true, 0.38);
+    const elapsed = (Date.now() - (this._serviceStartTime || Date.now())) / 1000;
+    this._maybeShowReview(true, 0.38, elapsed);
+
+    // Record purchase history for this customer name
+    const prevH = this.customerHistory[customer.name] || { visits: 0 };
+    this.customerHistory[customer.name] = {
+      productName: product.name,
+      productId:   productId,
+      category:    productCat,
+      satisfied:   true,
+      visits:      (prevH.visits || 0) + 1,
+    };
 
     customer.serve(true);
     this._finishSale(customer, product, addonSold ? ADDONS.find(a => a.id === addonId) : null);
@@ -359,10 +381,25 @@ class Game {
     this._finishSale(customer, null, null);
   }
 
-  _maybeShowReview(happy, chance = 0.35) {
-    if (Math.random() < chance) {
-      this.ui.showReview(happy ? 5 : 1);
+  _maybeShowReview(happy, baseChance = 0.35, elapsedSeconds = 0) {
+    if (!happy) {
+      // Wrong category / passed — time doesn't save them, already a bad experience
+      // But slow service on top of it makes a bad review more likely
+      const badChance = Math.min(0.85, baseChance + (elapsedSeconds > 30 ? 0.20 : 0));
+      if (Math.random() < badChance) this.ui.showReview(1);
+      return;
     }
+
+    // Successful sale — speed determines whether review is good, neutral, or bad
+    let goodChance, badChance;
+    if      (elapsedSeconds < 12) { goodChance = 0.70; badChance = 0.00; } // lightning fast
+    else if (elapsedSeconds < 25) { goodChance = 0.45; badChance = 0.05; } // solid pace
+    else if (elapsedSeconds < 45) { goodChance = 0.20; badChance = 0.22; } // slow
+    else                          { goodChance = 0.08; badChance = 0.50; } // very slow
+
+    const roll = Math.random();
+    if      (roll < goodChance)              this.ui.showReview(5);
+    else if (roll < goodChance + badChance)  this.ui.showReview(1);
   }
 
   _finishSale(customer, product, addon) {
