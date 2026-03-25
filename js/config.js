@@ -372,3 +372,67 @@ const UPSELL_LINES = [
   "Our customers rave about the {name} — want to try it?",
   "Between us, the {name} is where it's really at.",
 ];
+
+// ============================================================
+//  CONVERSATION SYSTEM — vague opening lines & effect hints
+// ============================================================
+
+const CUSTOMER_VAGUE_DIALOGUES = {
+  budget: [
+    "Just stopping by to check things out.",
+    "My buddy sent me — said this is the spot.",
+    "Need something for tonight.",
+    "Quick stop on my way home.",
+  ],
+  curious: [
+    "First time here! This place looks amazing.",
+    "A friend wouldn't stop talking about Skones.",
+    "Saw you guys on Instagram — had to come in.",
+    "Just moved to the area, still exploring.",
+  ],
+  enthusiast: [
+    "I've been looking for a quality shop around here.",
+    "Heard you carry some interesting inventory.",
+    "I know what I like when I find it.",
+    "Been doing my research on local spots.",
+  ],
+  highroller: [
+    "A colleague spoke highly of this establishment.",
+    "I'm rather particular about where I shop.",
+    "Looking to add to my collection today.",
+    "Word travels fast in the right circles.",
+  ],
+};
+
+const CATEGORY_EFFECT_HINTS = {
+  flower:       [
+    "Something to smoke — looking to vibe out tonight.",
+    "A good smoke to unwind after a long day.",
+    "Want to roll something nice, you know?",
+  ],
+  prerolls:     [
+    "Something ready to go — I don't want to prep anything.",
+    "Already rolled is ideal. In and out.",
+    "Convenient, no setup, just spark and go.",
+  ],
+  edibles:      [
+    "I'd rather eat something today, honestly.",
+    "Something I can take on the go — not trying to smoke.",
+    "Want longer, more mellow effects — eat it.",
+  ],
+  vapes:        [
+    "Need something discreet — always on the move.",
+    "Small, portable, no smell. That's my vibe.",
+    "Something I can use anywhere, low-key.",
+  ],
+  concentrate:  [
+    "Got a high tolerance, I need something serious.",
+    "I dab — what do you have for that?",
+    "Looking for something for my rig at home.",
+  ],
+  bskone_bongs: [
+    "Actually looking to invest in a nice piece.",
+    "Want something I can display and use at home.",
+    "A friend has one of your bongs — I want one.",
+  ],
+};

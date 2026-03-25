@@ -1219,6 +1219,103 @@ button, .product-card, .addon-card, .vendor-card,
 }
 
 /* ============================================================
+   CONVERSATION PHASE
+   ============================================================ */
+
+.sp-convo-section {
+  padding: 10px 14px 4px;
+}
+
+.sp-convo-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 7px;
+}
+
+.sp-questions {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.sp-question-btn {
+  background: #F7F3EE;
+  border: 1.5px solid #D8C8A8;
+  border-radius: 8px;
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 12px;
+  color: #2A2A1A;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-weight: 500;
+  touch-action: manipulation;
+}
+
+.sp-question-btn:hover:not(.asked) {
+  background: #EAE0D0;
+  border-color: #B89060;
+  transform: translateX(3px);
+}
+
+.sp-question-btn.asked {
+  background: #EDF7F1;
+  border-color: #2A8A50;
+  color: #1A4A2A;
+  cursor: default;
+  font-style: italic;
+}
+
+.sp-clue-box {
+  margin: 8px 14px 10px;
+  background: #FFFDF5;
+  border: 1.5px solid #E8D878;
+  border-radius: 10px;
+  padding: 8px 12px;
+}
+
+.sp-clue-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 5px;
+}
+
+.sp-clue-empty {
+  font-size: 11px;
+  color: #BBB;
+  font-style: italic;
+}
+
+.sp-clue-item {
+  font-size: 12px;
+  color: #2A2A1A;
+  padding: 3px 0;
+  border-bottom: 1px solid #F0E8C8;
+  line-height: 1.4;
+}
+
+.sp-clue-item:last-child { border-bottom: none; }
+
+.sp-returning-badge {
+  display: inline-block;
+  font-size: 10px;
+  background: #EDF7F1;
+  color: #2A6040;
+  border: 1px solid #2A8A50;
+  border-radius: 10px;
+  padding: 1px 6px;
+  font-weight: 600;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+/* ============================================================
    STAR REVIEW TOAST
    ============================================================ */
 

@@ -19,6 +19,8 @@ class UIManager {
 
   showOnly(panelName) {
     Object.keys(this.panels).forEach(k => {
+      // Notification and review manage their own visibility via timers
+      if (k === 'notification' || k === 'review') return;
       if (this.panels[k]) this.panels[k].style.display = 'none';
     });
     if (panelName && this.panels[panelName]) {
@@ -52,51 +54,171 @@ class UIManager {
   }
 
   // ─── Service panel (serving current customer) ─────────────
-  renderServicePanel(customer, unlockedProducts) {
+  renderServicePanel(customer, unlockedProducts, history = null) {
     const panel = this.panels.service;
     if (!panel) return;
 
-    const customerCat = customer.category;
-    const catMeta     = CATEGORY_META[customerCat];
-    this._activeCatTab = customerCat;
+    this._activeCatTab = customer.category;
+    this._revealed     = { category: false, budget: false, effects: false, lastVisit: false };
+
+    const isReturning = history && history.visits > 0;
 
     panel.innerHTML = `
       <div class="sp-header">
         <div class="sp-customer-info">
           <div class="sp-avatar">${customer.typeDef.outfits[0]}</div>
           <div class="sp-details">
-            <div class="sp-name">${customer.name}</div>
+            <div class="sp-name">${customer.name}${isReturning ? ' <span class="sp-returning-badge">🔄 Returning</span>' : ''}</div>
             <div class="sp-type" style="color:${customer.typeDef.color}">${customer.typeDef.label}</div>
-            <div class="sp-request">Looking for: <strong>${catMeta.icon} ${catMeta.label}</strong> &nbsp;|&nbsp; Budget: <strong>$${customer.budget}</strong></div>
-            <div class="sp-dialogue">"${customer.dialogue}"</div>
+            <div class="sp-dialogue">"${customer.vagueDialogue || customer.dialogue}"</div>
           </div>
         </div>
         <button class="btn btn-secondary sp-skip" id="btn-skip-customer">Pass</button>
       </div>
+      <div class="sp-scroll-body" id="sp-scroll-body"></div>
+      <div class="sp-footer"     id="sp-footer"></div>
+    `;
 
-      <div class="sp-scroll-body">
-        <div class="sp-cat-tabs" id="sp-cat-tabs"></div>
-        <div class="sp-wrong-cat-banner" id="sp-wrong-cat-banner" style="display:none">
-          ⚠️ <strong>${customer.name}</strong> wants <strong>${catMeta.icon} ${catMeta.label}</strong> — selling the wrong thing will make them leave!
+    document.getElementById('btn-skip-customer')?.addEventListener('click', () => {
+      this.game.skipCustomer(customer);
+    });
+
+    this._renderConversationPhase(customer, unlockedProducts, history);
+    this.showOnly('service');
+  }
+
+  // ─── Conversation phase ────────────────────────────────────
+  _renderConversationPhase(customer, unlockedProducts, history) {
+    const body   = document.getElementById('sp-scroll-body');
+    const footer = document.getElementById('sp-footer');
+    if (!body || !footer) return;
+
+    const isReturning = history && history.visits > 0;
+    const catMeta     = CATEGORY_META[customer.category];
+
+    body.innerHTML = `
+      <div class="sp-convo-section">
+        <div class="sp-convo-label">💬 Ask questions to learn what they need:</div>
+        <div class="sp-questions" id="sp-questions">
+          <button class="sp-question-btn" id="q-category">🔍 What are you looking for today?</button>
+          <button class="sp-question-btn" id="q-budget">💰 What's your budget like?</button>
+          <button class="sp-question-btn" id="q-effects">✨ What kind of effects are you after?</button>
+          ${isReturning ? '<button class="sp-question-btn" id="q-lastvisit">🔄 How was your last visit?</button>' : ''}
         </div>
-        <div class="sp-section-title" id="sp-products-title"></div>
-        <div class="sp-products" id="sp-products"></div>
-        <div class="sp-section-title">Suggest an Add-On <span style="font-weight:400;color:#aaa">(optional)</span></div>
-        <div class="sp-addons" id="sp-addons"></div>
       </div>
-
-      <div class="sp-footer">
-        <div id="sp-selected-product" class="sp-selected-slot">👆 Select a product above</div>
-        <div id="sp-selected-addon"   class="sp-selected-slot sp-addon-slot">No add-on</div>
-        <button class="btn btn-brand sp-sell-btn" id="btn-complete-sale" disabled>💰 Complete Sale</button>
+      <div class="sp-clue-box">
+        <div class="sp-clue-title">📋 What you know so far:</div>
+        <div id="sp-clues"><div class="sp-clue-empty">Ask questions to gather info before recommending...</div></div>
       </div>
     `;
 
+    footer.innerHTML = `
+      <button class="btn btn-brand sp-sell-btn" id="btn-make-rec">🛍️ Make a Recommendation →</button>
+    `;
+
+    // Wire question buttons
+    document.getElementById('q-category')?.addEventListener('click', e => {
+      if (this._revealed.category) return;
+      this._revealed.category = true;
+      e.currentTarget.classList.add('asked');
+      e.currentTarget.textContent = `🔍 Looking for: ${catMeta.icon} ${catMeta.label}`;
+      this._updateClues(customer, history);
+    });
+
+    document.getElementById('q-budget')?.addEventListener('click', e => {
+      if (this._revealed.budget) return;
+      this._revealed.budget = true;
+      e.currentTarget.classList.add('asked');
+      e.currentTarget.textContent = `💰 Budget: around $${customer.budget}`;
+      this._updateClues(customer, history);
+    });
+
+    document.getElementById('q-effects')?.addEventListener('click', e => {
+      if (this._revealed.effects) return;
+      this._revealed.effects = true;
+      e.currentTarget.classList.add('asked');
+      e.currentTarget.textContent = `✨ "${customer.effectHint || 'Something good...'}"`;
+      this._updateClues(customer, history);
+    });
+
+    if (isReturning) {
+      document.getElementById('q-lastvisit')?.addEventListener('click', e => {
+        if (this._revealed.lastVisit) return;
+        this._revealed.lastVisit = true;
+        e.currentTarget.classList.add('asked');
+        const txt = history.satisfied
+          ? `🔄 "${history.productName}? Loved it!" ✅`
+          : `🔄 "Last time wasn't great..." ❌`;
+        e.currentTarget.textContent = txt;
+        this._updateClues(customer, history);
+      });
+    }
+
+    document.getElementById('btn-make-rec')?.addEventListener('click', () => {
+      this._renderRecommendationPhase(customer, unlockedProducts);
+    });
+  }
+
+  _updateClues(customer, history) {
+    const cluesEl = document.getElementById('sp-clues');
+    if (!cluesEl) return;
+    const catMeta = CATEGORY_META[customer.category];
+    const items = [];
+    if (this._revealed.category)
+      items.push(`<div class="sp-clue-item">🎯 Wants: <strong>${catMeta.icon} ${catMeta.label}</strong></div>`);
+    if (this._revealed.budget)
+      items.push(`<div class="sp-clue-item">💰 Budget: <strong>~$${customer.budget}</strong></div>`);
+    if (this._revealed.effects)
+      items.push(`<div class="sp-clue-item">✨ <em>"${customer.effectHint || 'Something good'}"</em></div>`);
+    if (this._revealed.lastVisit && history) {
+      const icon = history.satisfied ? '✅' : '❌';
+      const txt  = history.satisfied
+        ? `Last bought <strong>${history.productName}</strong> — loved it`
+        : `Last visit didn't go well — make it right`;
+      items.push(`<div class="sp-clue-item">${icon} ${txt}</div>`);
+    }
+    cluesEl.innerHTML = items.length
+      ? items.join('')
+      : '<div class="sp-clue-empty">Ask questions to gather info before recommending...</div>';
+  }
+
+  // ─── Recommendation phase ──────────────────────────────────
+  _renderRecommendationPhase(customer, unlockedProducts) {
+    const body   = document.getElementById('sp-scroll-body');
+    const footer = document.getElementById('sp-footer');
+    if (!body || !footer) return;
+
+    const catMeta = CATEGORY_META[customer.category];
+    this._activeCatTab = customer.category;
+
+    body.innerHTML = `
+      <div class="sp-cat-tabs" id="sp-cat-tabs"></div>
+      <div class="sp-wrong-cat-banner" id="sp-wrong-cat-banner" style="display:none">
+        ⚠️ <strong>${customer.name}</strong> wants <strong>${catMeta.icon} ${catMeta.label}</strong> — wrong category = they leave!
+      </div>
+      <div class="sp-section-title" id="sp-products-title"></div>
+      <div class="sp-products" id="sp-products"></div>
+      <div class="sp-section-title">Add-On <span style="font-weight:400;color:#aaa">(optional)</span></div>
+      <div class="sp-addons" id="sp-addons"></div>
+    `;
+
+    footer.innerHTML = `
+      <div id="sp-selected-product" class="sp-selected-slot">👆 Select a product above</div>
+      <div id="sp-selected-addon"   class="sp-selected-slot sp-addon-slot">No add-on</div>
+      <button class="btn btn-brand sp-sell-btn" id="btn-complete-sale" disabled>💰 Complete Sale</button>
+    `;
+
     this._renderCatTabs(customer, unlockedProducts);
-    this._renderProductsForTab(customerCat, unlockedProducts, customer);
+    this._renderProductsForTab(customer.category, unlockedProducts, customer);
     this._renderAddonOptions(unlockedProducts._addons || []);
-    this._wireServiceEvents(customer);
-    this.showOnly('service');
+
+    document.getElementById('btn-complete-sale')?.addEventListener('click', () => {
+      const selProduct = document.getElementById('sp-selected-product');
+      const selAddon   = document.getElementById('sp-selected-addon');
+      const productId  = selProduct?.dataset?.productId;
+      const addonId    = selAddon?.dataset?.addonId;
+      if (productId) this.game.attemptSale(customer, productId, addonId);
+    });
   }
 
   _renderCatTabs(customer, unlockedProducts) {
@@ -105,14 +227,16 @@ class UIManager {
 
     const allCats = Object.keys(PRODUCTS);
     container.innerHTML = allCats.map(cat => {
-      const meta     = CATEGORY_META[cat];
-      const isWants  = cat === customer.category;
-      const isActive = cat === this._activeCatTab;
+      const meta      = CATEGORY_META[cat];
+      const isWants   = cat === customer.category;
+      const isActive  = cat === this._activeCatTab;
+      // Only show "Wants!" badge if player asked about category
+      const showHint  = isWants && this._revealed && this._revealed.category;
       return `
-        <button class="sp-cat-tab${isActive ? ' active' : ''}${isWants ? ' wants' : ''}" data-cat="${cat}">
+        <button class="sp-cat-tab${isActive ? ' active' : ''}${showHint ? ' wants' : ''}" data-cat="${cat}">
           <span class="sp-cat-tab-icon">${meta.icon}</span>
           <span class="sp-cat-tab-label">${meta.label}</span>
-          ${isWants ? '<span class="sp-cat-wants-badge">Wants!</span>' : ''}
+          ${showHint ? '<span class="sp-cat-wants-badge">Wants!</span>' : ''}
         </button>
       `;
     }).join('');
@@ -125,10 +249,11 @@ class UIManager {
 
         const banner = document.getElementById('sp-wrong-cat-banner');
         if (banner) {
-          banner.style.display = this._activeCatTab !== customer.category ? 'flex' : 'none';
+          // Only warn if player actually learned the category
+          const wrongTab = this._activeCatTab !== customer.category;
+          banner.style.display = (this._revealed.category && wrongTab) ? 'flex' : 'none';
         }
 
-        // Clear product selection when switching tabs
         const selProduct = document.getElementById('sp-selected-product');
         if (selProduct) {
           selProduct.textContent = '👆 Select a product above';
@@ -156,11 +281,13 @@ class UIManager {
 
     container.innerHTML = products.map(p => {
       const overBudget = p.price > customer.budget;
-      const pct  = overBudget ? Math.round(((p.price - customer.budget) / customer.budget) * 100) : 0;
-      const tag  = overBudget
-        ? `<span class="tag tag-upsell">↑ $${p.price - customer.budget} over budget</span>`
-        : `<span class="tag tag-ok">In budget ✓</span>`;
-
+      // Only show budget hint tags if player asked about budget
+      let tag = '';
+      if (this._revealed && this._revealed.budget) {
+        tag = overBudget
+          ? `<span class="tag tag-upsell">↑ $${p.price - customer.budget} over budget</span>`
+          : `<span class="tag tag-ok">In budget ✓</span>`;
+      }
       return `
         <div class="product-card ${overBudget ? 'over-budget' : 'in-budget'}"
              data-product-id="${p.id}" data-price="${p.price}">
@@ -175,7 +302,6 @@ class UIManager {
       `;
     }).join('');
 
-    // Card click
     container.querySelectorAll('.product-card').forEach(card => {
       card.addEventListener('click', () => {
         container.querySelectorAll('.product-card').forEach(c => c.classList.remove('selected'));
@@ -241,26 +367,6 @@ class UIManager {
     }
   }
 
-  _wireServiceEvents(customer) {
-    const btnComplete = document.getElementById('btn-complete-sale');
-    const btnSkip     = document.getElementById('btn-skip-customer');
-
-    if (btnComplete) {
-      btnComplete.addEventListener('click', () => {
-        const selProduct = document.getElementById('sp-selected-product');
-        const selAddon   = document.getElementById('sp-selected-addon');
-        const productId  = selProduct?.dataset?.productId;
-        const addonId    = selAddon?.dataset?.addonId;
-        if (productId) this.game.attemptSale(customer, productId, addonId);
-      });
-    }
-
-    if (btnSkip) {
-      btnSkip.addEventListener('click', () => {
-        this.game.skipCustomer(customer);
-      });
-    }
-  }
 
   // ─── Sale result notification ──────────────────────────────
   showNotification(text, type = 'success', durationMs = 2800) {
