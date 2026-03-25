@@ -58,8 +58,9 @@ class UIManager {
     const panel = this.panels.service;
     if (!panel) return;
 
-    this._activeCatTab = customer.category;
+    this._activeCatTab = Object.keys(PRODUCTS)[0]; // start on first tab, NOT customer's category
     this._revealed     = { category: false, budget: false, effects: false, lastVisit: false };
+    this._cart         = [];
 
     const isReturning = history && history.visits > 0;
 
@@ -188,36 +189,124 @@ class UIManager {
     const footer = document.getElementById('sp-footer');
     if (!body || !footer) return;
 
-    const catMeta = CATEGORY_META[customer.category];
-    this._activeCatTab = customer.category;
+    this._cart         = [];
+    this._activeCatTab = Object.keys(PRODUCTS)[0];
+    const catMeta      = CATEGORY_META[customer.category];
+    const tolerance    = customer.typeDef.cartTolerance || 2;
 
     body.innerHTML = `
       <div class="sp-cat-tabs" id="sp-cat-tabs"></div>
       <div class="sp-wrong-cat-banner" id="sp-wrong-cat-banner" style="display:none">
-        ⚠️ <strong>${customer.name}</strong> wants <strong>${catMeta.icon} ${catMeta.label}</strong> — wrong category = they leave!
+        ⚠️ Wrong category — they'll leave unless your effect hint suggests this works!
       </div>
       <div class="sp-section-title" id="sp-products-title"></div>
       <div class="sp-products" id="sp-products"></div>
-      <div class="sp-section-title">Add-On <span style="font-weight:400;color:#aaa">(optional)</span></div>
+      <div class="sp-section-title">Add-ons <span style="font-weight:400;color:#aaa">(optional)</span></div>
       <div class="sp-addons" id="sp-addons"></div>
     `;
 
     footer.innerHTML = `
-      <div id="sp-selected-product" class="sp-selected-slot">👆 Select a product above</div>
-      <div id="sp-selected-addon"   class="sp-selected-slot sp-addon-slot">No add-on</div>
-      <button class="btn btn-brand sp-sell-btn" id="btn-complete-sale" disabled>💰 Complete Sale</button>
+      <div class="sp-cart" id="sp-cart">
+        <div class="sp-cart-header">
+          <span class="sp-cart-label">🛒 Cart</span>
+          <span class="sp-cart-mood" id="sp-cart-mood" title="Customer patience">😊</span>
+          <span class="sp-cart-tolerance" id="sp-cart-tolerance">0 / ${tolerance}</span>
+        </div>
+        <div class="sp-cart-items" id="sp-cart-items">
+          <span class="sp-cart-empty">Add items above to build the sale</span>
+        </div>
+        <div class="sp-cart-total-row">
+          <span id="sp-cart-total">Total: $0</span>
+          <button class="btn btn-brand sp-sell-btn" id="btn-complete-sale" disabled>💰 Complete Sale</button>
+        </div>
+      </div>
     `;
 
     this._renderCatTabs(customer, unlockedProducts);
-    this._renderProductsForTab(customer.category, unlockedProducts, customer);
-    this._renderAddonOptions(unlockedProducts._addons || []);
+    this._renderProductsForTab(this._activeCatTab, unlockedProducts, customer);
+    this._renderAddonOptions(unlockedProducts._addons || [], customer);
 
     document.getElementById('btn-complete-sale')?.addEventListener('click', () => {
-      const selProduct = document.getElementById('sp-selected-product');
-      const selAddon   = document.getElementById('sp-selected-addon');
-      const productId  = selProduct?.dataset?.productId;
-      const addonId    = selAddon?.dataset?.addonId;
-      if (productId) this.game.attemptSale(customer, productId, addonId);
+      if (this._cart.length > 0) this.game.attemptSale(customer, this._cart);
+    });
+  }
+
+  // ─── Cart management ───────────────────────────────────────
+  _toggleCartItem(item, customer) {
+    const existing = this._cart.findIndex(c => c.id === item.id);
+    if (existing >= 0) {
+      this._cart.splice(existing, 1);
+    } else {
+      this._cart.push(item);
+    }
+    this._refreshCartUI(customer);
+    this._refreshProductButtons();
+    this._refreshAddonButtons();
+  }
+
+  _refreshCartUI(customer) {
+    const tolerance  = customer.typeDef.cartTolerance || 2;
+    const cartItems  = document.getElementById('sp-cart-items');
+    const cartTotal  = document.getElementById('sp-cart-total');
+    const cartMood   = document.getElementById('sp-cart-mood');
+    const cartTolEl  = document.getElementById('sp-cart-tolerance');
+    const btnSell    = document.getElementById('btn-complete-sale');
+
+    const total = this._cart.reduce((s, i) => s + i.price, 0);
+
+    // Cart items list
+    if (cartItems) {
+      if (this._cart.length === 0) {
+        cartItems.innerHTML = '<span class="sp-cart-empty">Add items above to build the sale</span>';
+      } else {
+        cartItems.innerHTML = this._cart.map(i => `
+          <span class="sp-cart-item" data-id="${i.id}">
+            ${i.name} <em>$${i.price}</em>
+            <button class="sp-cart-remove" data-id="${i.id}">✕</button>
+          </span>
+        `).join('');
+        cartItems.querySelectorAll('.sp-cart-remove').forEach(btn => {
+          btn.addEventListener('click', e => {
+            e.stopPropagation();
+            const id = btn.dataset.id;
+            this._cart = this._cart.filter(c => c.id !== id);
+            this._refreshCartUI(customer);
+            this._refreshProductButtons();
+            this._refreshAddonButtons();
+          });
+        });
+      }
+    }
+
+    if (cartTotal) cartTotal.textContent = `Total: $${total}`;
+    if (btnSell)   btnSell.disabled = this._cart.length === 0;
+
+    // Mood + tolerance indicator
+    const count = this._cart.length;
+    if (cartTolEl) cartTolEl.textContent = `${count} / ${tolerance}`;
+    if (cartMood) {
+      if      (count === 0)              cartMood.textContent = '😊';
+      else if (count <= tolerance)       cartMood.textContent = '😊';
+      else if (count === tolerance + 1)  cartMood.textContent = '😐';
+      else                               cartMood.textContent = '😤';
+    }
+  }
+
+  _refreshProductButtons() {
+    document.querySelectorAll('.product-cart-btn').forEach(btn => {
+      const id      = btn.dataset.id;
+      const inCart  = this._cart.some(c => c.id === id);
+      btn.textContent  = inCart ? '✓ Added' : '+ Add';
+      btn.className    = 'product-cart-btn' + (inCart ? ' in-cart' : '');
+    });
+  }
+
+  _refreshAddonButtons() {
+    document.querySelectorAll('.addon-cart-btn').forEach(btn => {
+      const id     = btn.dataset.id;
+      const inCart = this._cart.some(c => c.id === id);
+      btn.textContent = inCart ? '✓' : '+';
+      btn.className   = 'addon-cart-btn' + (inCart ? ' in-cart' : '');
     });
   }
 
@@ -249,18 +338,9 @@ class UIManager {
 
         const banner = document.getElementById('sp-wrong-cat-banner');
         if (banner) {
-          // Only warn if player actually learned the category
           const wrongTab = this._activeCatTab !== customer.category;
           banner.style.display = (this._revealed.category && wrongTab) ? 'flex' : 'none';
         }
-
-        const selProduct = document.getElementById('sp-selected-product');
-        if (selProduct) {
-          selProduct.textContent = '👆 Select a product above';
-          delete selProduct.dataset.productId;
-        }
-        const btnComplete = document.getElementById('btn-complete-sale');
-        if (btnComplete) btnComplete.disabled = true;
 
         this._renderProductsForTab(this._activeCatTab, unlockedProducts, customer);
       });
@@ -279,93 +359,76 @@ class UIManager {
     const container = document.getElementById('sp-products');
     if (!container) return;
 
+    const cat = this._activeCatTab;
     container.innerHTML = products.map(p => {
       const overBudget = p.price > customer.budget;
-      // Only show budget hint tags if player asked about budget
+      const inCart     = this._cart && this._cart.some(c => c.id === p.id);
       let tag = '';
       if (this._revealed && this._revealed.budget) {
         tag = overBudget
-          ? `<span class="tag tag-upsell">↑ $${p.price - customer.budget} over budget</span>`
+          ? `<span class="tag tag-upsell">↑ $${p.price - customer.budget} over</span>`
           : `<span class="tag tag-ok">In budget ✓</span>`;
       }
       return `
-        <div class="product-card ${overBudget ? 'over-budget' : 'in-budget'}"
-             data-product-id="${p.id}" data-price="${p.price}">
+        <div class="product-card ${overBudget ? 'over-budget' : 'in-budget'}${inCart ? ' in-cart-card' : ''}"
+             data-product-id="${p.id}">
           <div class="product-name">${p.name}</div>
           <div class="product-desc">${p.desc}</div>
           <div class="product-effect">✨ ${p.effect}</div>
           <div class="product-footer">
             <span class="product-price">$${p.price}</span>
             ${tag}
+            <button class="product-cart-btn${inCart ? ' in-cart' : ''}" data-id="${p.id}">${inCart ? '✓ Added' : '+ Add'}</button>
           </div>
         </div>
       `;
     }).join('');
 
-    container.querySelectorAll('.product-card').forEach(card => {
-      card.addEventListener('click', () => {
-        container.querySelectorAll('.product-card').forEach(c => c.classList.remove('selected'));
-        card.classList.add('selected');
-        const pid = card.dataset.productId;
-        const p   = products.find(pr => pr.id === pid);
-        if (p) {
-          const sel = document.getElementById('sp-selected-product');
-          if (sel) {
-            sel.textContent = `${p.name} — $${p.price}`;
-            sel.dataset.productId = p.id;
-          }
-          this._checkSaleReady();
-        }
+    container.querySelectorAll('.product-cart-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const p = products.find(pr => pr.id === btn.dataset.id);
+        if (!p) return;
+        this._toggleCartItem({ id: p.id, name: p.name, price: p.price, cost: p.cost, category: cat, isAddon: false }, customer);
+        // Refresh card highlight
+        container.querySelectorAll('.product-card').forEach(card => {
+          const inC = this._cart.some(c => c.id === card.dataset.productId);
+          card.classList.toggle('in-cart-card', inC);
+        });
       });
     });
   }
 
-  _renderAddonOptions(addons) {
+  _renderAddonOptions(addons, customer) {
     const container = document.getElementById('sp-addons');
     if (!container) return;
 
-    container.innerHTML = `
-      <div class="addon-card addon-none selected" data-addon-id="none">
-        <span class="addon-icon">🚫</span>
-        <span class="addon-name">None</span>
-      </div>
-    ` + addons.map(a => `
-      <div class="addon-card" data-addon-id="${a.id}" data-price="${a.price}">
-        <span class="addon-icon">${a.icon}</span>
-        <span class="addon-name">${a.name}</span>
-        <span class="addon-price">$${a.price}</span>
-      </div>
-    `).join('');
+    container.innerHTML = addons.map(a => {
+      const inCart = this._cart && this._cart.some(c => c.id === a.id);
+      return `
+        <div class="addon-card${inCart ? ' in-cart-card' : ''}" data-addon-id="${a.id}">
+          <span class="addon-icon">${a.icon}</span>
+          <span class="addon-name">${a.name}</span>
+          <span class="addon-price">$${a.price}</span>
+          <button class="addon-cart-btn${inCart ? ' in-cart' : ''}" data-id="${a.id}">${inCart ? '✓' : '+'}</button>
+        </div>
+      `;
+    }).join('');
 
-    container.querySelectorAll('.addon-card').forEach(card => {
-      card.addEventListener('click', () => {
-        container.querySelectorAll('.addon-card').forEach(c => c.classList.remove('selected'));
-        card.classList.add('selected');
-        const aid = card.dataset.addonId;
-        const sel = document.getElementById('sp-selected-addon');
-        if (sel) {
-          if (aid === 'none') {
-            sel.textContent = 'No add-on';
-            sel.dataset.addonId = 'none';
-          } else {
-            const addon = ADDONS.find(a => a.id === aid);
-            if (addon) {
-              sel.textContent = `${addon.icon} ${addon.name} — $${addon.price}`;
-              sel.dataset.addonId = addon.id;
-            }
-          }
-        }
+    container.querySelectorAll('.addon-cart-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const a = addons.find(ad => ad.id === btn.dataset.id);
+        if (!a) return;
+        this._toggleCartItem({ id: a.id, name: a.name, price: a.price, cost: a.cost, category: null, isAddon: true }, customer);
+        container.querySelectorAll('.addon-card').forEach(card => {
+          const inC = this._cart.some(c => c.id === card.dataset.addonId);
+          card.classList.toggle('in-cart-card', inC);
+        });
       });
     });
   }
 
-  _checkSaleReady() {
-    const btn = document.getElementById('btn-complete-sale');
-    const sel = document.getElementById('sp-selected-product');
-    if (btn && sel && sel.dataset.productId) {
-      btn.disabled = false;
-    }
-  }
 
 
   // ─── Sale result notification ──────────────────────────────
@@ -672,10 +735,10 @@ class UIManager {
             <div class="htp-section-title">🌿 The Big Picture</div>
             <p class="htp-text">
               You're running <strong>Skones</strong> — a cannabis dispensary.
-              Customers walk in every shift looking for something specific.
-              Your job is to <strong>recommend the right product, suggest an add-on,
-              and close the sale</strong>. The more you earn, the more vendors
-              and marketing you can unlock — growing your store into an empire.
+              Customers walk in every shift, but they <em>won't tell you what they want upfront</em>.
+              Your job is to <strong>ask the right questions, read between the lines,
+              build the right sale, and close it fast</strong>.
+              The more you earn, the more vendors and marketing you unlock — growing your store into an empire.
             </p>
           </div>
 
@@ -683,121 +746,129 @@ class UIManager {
           <div class="htp-section">
             <div class="htp-section-title">🗓️ A Day in the Store</div>
             <div class="htp-steps">
-              <div class="htp-step">
-                <span class="htp-step-num">1</span>
-                <div><strong>Customers arrive</strong> — they walk up to the counter and tell you what they're after.</div>
+              <div class="htp-step"><span class="htp-step-num">1</span>
+                <div><strong>Customer walks up</strong> — reads their vague opening line. They won't tell you what they want yet.</div>
               </div>
-              <div class="htp-step">
-                <span class="htp-step-num">2</span>
-                <div><strong>Pick a product</strong> — choose something in their budget for a sure sale, or suggest something pricier and try to upsell.</div>
+              <div class="htp-step"><span class="htp-step-num">2</span>
+                <div><strong>Ask questions</strong> — "What are you looking for?", "What's your budget?", "What effects are you after?", and "How was your last visit?" (returning customers only).</div>
               </div>
-              <div class="htp-step">
-                <span class="htp-step-num">3</span>
-                <div><strong>Add an add-on</strong> — rolling papers, a lighter, a vape battery — a quick extra few dollars on every sale.</div>
+              <div class="htp-step"><span class="htp-step-num">3</span>
+                <div><strong>Make a Recommendation</strong> — browse categories and add items to the cart with the <strong>+ Add</strong> button. Build a haul — but don't overdo it.</div>
               </div>
-              <div class="htp-step">
-                <span class="htp-step-num">4</span>
-                <div><strong>Complete the Sale</strong> — hit the green button and watch the money roll in.</div>
+              <div class="htp-step"><span class="htp-step-num">4</span>
+                <div><strong>Complete the Sale</strong> — hit the green button. Watch the cart mood emoji: 😊 = good, 😐 = pushing it, 😤 = they'll walk.</div>
               </div>
-              <div class="htp-step">
-                <span class="htp-step-num">5</span>
-                <div><strong>End of Day</strong> — after 3 shifts, review your earnings, visit vendors, and invest in marketing before the next day.</div>
+              <div class="htp-step"><span class="htp-step-num">5</span>
+                <div><strong>End of Day</strong> — review earnings, visit vendors, invest in marketing. Rinse and repeat.</div>
               </div>
             </div>
           </div>
 
-          <!-- ── CUSTOMER TYPES ── -->
+          <!-- ── CONVERSATION ── -->
           <div class="htp-section">
-            <div class="htp-section-title">👥 Know Your Customers</div>
-            <p class="htp-text">Each customer has a type — watch for the badge on their shirt and adjust your pitch accordingly.</p>
+            <div class="htp-section-title">💬 Asking the Right Questions</div>
+            <p class="htp-text">You have up to 4 questions to ask before making your recommendation. Each one reveals key intel:</p>
+            <div class="htp-steps">
+              <div class="htp-step"><span class="htp-step-num">🔍</span>
+                <div><strong>"What are you looking for?"</strong> — Reveals their category. The matching tab gets a <em>Wants!</em> badge. Skip this and you're guessing blind.</div>
+              </div>
+              <div class="htp-step"><span class="htp-step-num">💰</span>
+                <div><strong>"What's your budget?"</strong> — Reveals their budget. Products then show <em>In budget ✓</em> or <em>↑ over budget</em> tags so you can upsell smartly.</div>
+              </div>
+              <div class="htp-step"><span class="htp-step-num">✨</span>
+                <div><strong>"What effects are you after?"</strong> — Their answer contains <strong>hidden clues</strong>. Listen carefully — sometimes it hints at a smarter recommendation than their original category.</div>
+              </div>
+              <div class="htp-step"><span class="htp-step-num">🔄</span>
+                <div><strong>"How was your last visit?"</strong> — <em>Returning customers only.</em> Reveals what they bought before and whether they liked it. Use this to make an even better rec.</div>
+              </div>
+            </div>
+            <div class="htp-tip">💡 You don't have to ask everything — but the less you know, the higher the risk of recommending the wrong thing.</div>
+          </div>
+
+          <!-- ── SMART SELLS ── -->
+          <div class="htp-section">
+            <div class="htp-section-title">🌟 Smart Sells — Reading the Room</div>
+            <p class="htp-text">
+              Sometimes a customer comes in for one thing but their <strong>effects hint</strong>
+              suggests something else would actually suit them better.
+              If you offer a compatible alternative that matches their hints, there's a
+              <strong>65% chance they love it</strong> — and you get a bonus reputation boost for reading the room.
+            </p>
+            <div class="htp-products-grid">
+              <div class="htp-prod-row"><span class="htp-prod-icon">🌿→🪄</span><div>Flower customer says <em>"I'm always on the go, something convenient"</em> → try Pre-rolls</div></div>
+              <div class="htp-prod-row"><span class="htp-prod-icon">🌿→🏺</span><div>Flower customer says <em>"I want to invest in a nice piece for home"</em> → try a BSkone Bong</div></div>
+              <div class="htp-prod-row"><span class="htp-prod-icon">🍬→💨</span><div>Edibles customer says <em>"Need something discreet and portable"</em> → try Vapes</div></div>
+              <div class="htp-prod-row"><span class="htp-prod-icon">💨→💎</span><div>Vape customer says <em>"I dab, need something strong"</em> → try Concentrate</div></div>
+            </div>
+            <div class="htp-tip">💡 If the effects hint doesn't match the category you're offering, offering the wrong thing will still make them leave.</div>
+          </div>
+
+          <!-- ── CART & OVERSELL ── -->
+          <div class="htp-section">
+            <div class="htp-section-title">🛒 Building the Cart — Don't Oversell</div>
+            <p class="htp-text">
+              You can add <strong>multiple products and add-ons</strong> to the cart before completing a sale.
+              But every customer has a tolerance for how much they'll buy.
+              Push too hard and they'll walk out without buying <em>anything</em>.
+            </p>
             <div class="htp-customers">
               <div class="htp-customer-card" style="border-color:#7090A8">
                 <div class="htp-cust-emoji">👕</div>
                 <div class="htp-cust-name" style="color:#7090A8">Budget Shopper</div>
-                <div class="htp-cust-desc">Has a strict budget. Rarely accepts upsells. Stick close to their number.</div>
-                <div class="htp-cust-stat">Upsell chance: <strong style="color:#E05050">5%</strong></div>
+                <div class="htp-cust-stat">Cart limit: <strong>1 item</strong></div>
+                <div class="htp-cust-desc">Just wants their one thing. Add anything extra and they'll push back.</div>
               </div>
               <div class="htp-customer-card" style="border-color:#78A870">
                 <div class="htp-cust-emoji">🧥</div>
                 <div class="htp-cust-name" style="color:#78A870">Curious Explorer</div>
-                <div class="htp-cust-desc">Open to suggestions and new things. Good target for a gentle upsell.</div>
-                <div class="htp-cust-stat">Upsell chance: <strong style="color:#C86820">40%</strong></div>
+                <div class="htp-cust-stat">Cart limit: <strong>2 items</strong></div>
+                <div class="htp-cust-desc">Open to one extra. A lighter or grinder works great.</div>
               </div>
               <div class="htp-customer-card" style="border-color:#A07840">
                 <div class="htp-cust-emoji">🥼</div>
                 <div class="htp-cust-name" style="color:#A07840">Cannabis Enthusiast</div>
-                <div class="htp-cust-desc">Loves premium products. Happy to spend more for quality. Push the top shelf.</div>
-                <div class="htp-cust-stat">Upsell chance: <strong style="color:#2A8A50">65%</strong></div>
+                <div class="htp-cust-stat">Cart limit: <strong>3 items</strong></div>
+                <div class="htp-cust-desc">Loves building a haul. Load them up.</div>
               </div>
               <div class="htp-customer-card" style="border-color:#A06088">
                 <div class="htp-cust-emoji">🥻</div>
                 <div class="htp-cust-name" style="color:#A06088">High Roller</div>
-                <div class="htp-cust-desc">Only wants the finest. Always show the most expensive option — they'll almost always bite.</div>
-                <div class="htp-cust-stat">Upsell chance: <strong style="color:#2A8A50">90%</strong></div>
+                <div class="htp-cust-stat">Cart limit: <strong>4 items</strong></div>
+                <div class="htp-cust-desc">Take everything. Pile it on — they're here to spend.</div>
               </div>
             </div>
           </div>
 
-          <!-- ── PRODUCTS ── -->
+          <!-- ── REVIEWS & SPEED ── -->
           <div class="htp-section">
-            <div class="htp-section-title">🛍️ Product Categories</div>
-            <div class="htp-products-grid">
-              <div class="htp-prod-row"><span class="htp-prod-icon">🌿</span><div><strong>Flower</strong> — Classic buds. Tiers from a $25 House Blend up to $105 Jealousy.</div></div>
-              <div class="htp-prod-row"><span class="htp-prod-icon">🪄</span><div><strong>Pre-rolls</strong> — Ready to go. From an $8 House Pre-roll to $55 Diamond Infused.</div></div>
-              <div class="htp-prod-row"><span class="htp-prod-icon">🍬</span><div><strong>Edibles</strong> — Gummies and chocolates. Ranges from $15 (10mg) to $85 Luxury Box.</div></div>
-              <div class="htp-prod-row"><span class="htp-prod-icon">💨</span><div><strong>Vapes</strong> — Carts and devices. From a $35 500mg cart to a $125 All-In-One.</div></div>
-              <div class="htp-prod-row"><span class="htp-prod-icon">💎</span><div><strong>Concentrate</strong> — Extracts for the serious consumer. $45 Live Resin to $125 Diamonds & Sauce.</div></div>
-              <div class="htp-prod-row"><span class="htp-prod-icon">🏺</span><div><strong>BSkone Bongs</strong> — Handcrafted glass from our own collection. $45 Mini to $320 Grand Artist.</div></div>
+            <div class="htp-section-title">⭐ Reviews & Speed</div>
+            <p class="htp-text">
+              Happy customers sometimes leave <strong>5-star reviews</strong>. Unhappy customers leave <strong>1-star reviews</strong>.
+              But even a successful sale can get a bad review if you took too long.
+              Speed matters — faster service = better chance of a glowing review.
+            </p>
+            <div class="htp-steps">
+              <div class="htp-step"><span class="htp-step-num">⚡</span><div><strong>Under 12 seconds</strong> — 70% chance of 5-star review</div></div>
+              <div class="htp-step"><span class="htp-step-num">🕐</span><div><strong>12–25 seconds</strong> — 45% good, 5% bad</div></div>
+              <div class="htp-step"><span class="htp-step-num">🐢</span><div><strong>25–45 seconds</strong> — Even odds of good vs bad review</div></div>
+              <div class="htp-step"><span class="htp-step-num">😤</span><div><strong>Over 45 seconds</strong> — 50% chance of a 1-star even if sale succeeds</div></div>
             </div>
-            <p class="htp-text" style="margin-top:10px">
-              <strong>Tier 1 products</strong> are available from day one.
-              <strong>Tier 2 &amp; 3</strong> unlock when you partner with the right vendor.
-            </p>
-          </div>
-
-          <!-- ── UPSELLING ── -->
-          <div class="htp-section">
-            <div class="htp-section-title">💰 The Art of the Upsell</div>
-            <p class="htp-text">
-              When you recommend a product <strong>above a customer's budget</strong>,
-              it's a gamble — they might say no. But if they say yes, you earn significantly more
-              <em>and</em> gain bonus reputation. The customer's budget is shown in the top-right
-              of the service panel. Products marked <span style="background:#FFF0D8;color:#C86820;
-              padding:1px 6px;border-radius:4px;font-size:12px;font-weight:700">↑ over budget</span>
-              are upsells. The further over budget, the lower the acceptance chance.
-            </p>
-            <div class="htp-tip">💡 <strong>Tip:</strong> Enthusiasts and High Rollers respond well to upsells. Never upsell a Budget Shopper more than 20% over — they'll walk out.</div>
-          </div>
-
-          <!-- ── ADD-ONS ── -->
-          <div class="htp-section">
-            <div class="htp-section-title">🛒 Add-Ons — Easy Extra Revenue</div>
-            <p class="htp-text">
-              After selecting a product, always offer an add-on from the register area.
-              These are small impulse purchases — rolling papers ($3), a lighter ($2),
-              a grinder ($15), a vape battery ($22), and more. Customers accept add-ons
-              about 30–75% of the time depending on their type.
-              Unlock more add-ons by partnering with vendors.
-            </p>
-            <div class="htp-tip">💡 <strong>Tip:</strong> Even a $3 rolling papers add-on sold 10 times a day is $30 pure profit. Don't skip it!</div>
           </div>
 
           <!-- ── VENDORS ── -->
           <div class="htp-section">
             <div class="htp-section-title">🤝 Vendors — Grow Your Inventory</div>
             <p class="htp-text">
-              After each day, visit the <strong>Vendor Hall</strong> to partner with
-              new suppliers. Each vendor you sign unlocks higher-tier products,
-              brings in more customers per day, and boosts your reputation.
-              Vendors are a one-time cost — invest early and they pay back fast.
+              After each day, visit the <strong>Vendor Hall</strong> to partner with suppliers.
+              Each vendor unlocks higher-tier products, more customers per day, and a reputation boost.
             </p>
             <div class="htp-vendor-list">
               <div class="htp-vendor-row"><span>🌸</span><div><strong>Florist Fridays</strong> — $600. Unlocks Wedding Cake, Runtz, King Size pre-rolls.</div></div>
               <div class="htp-vendor-row"><span>☁️</span><div><strong>Cloud Nine Extracts</strong> — $800. Unlocks live resin &amp; rosin vapes and concentrates.</div></div>
               <div class="htp-vendor-row"><span>🧁</span><div><strong>Happy Bakers Co.</strong> — $700. Unlocks premium and nano edibles.</div></div>
               <div class="htp-vendor-row"><span>🏺</span><div><strong>BSkone Glass Works</strong> — $950. Unlocks Artisan, Signature &amp; Grand Artist bongs.</div></div>
-              <div class="htp-vendor-row"><span>🏆</span><div><strong>Premium Cultivars</strong> — $1,800. Unlocks exotic top-shelf flower (unlocks Day 5+).</div></div>
-              <div class="htp-vendor-row"><span>💎</span><div><strong>Apex Concentrates</strong> — $2,500. Unlocks Diamonds &amp; Sauce (unlocks Day 8+).</div></div>
+              <div class="htp-vendor-row"><span>🏆</span><div><strong>Premium Cultivars</strong> — $1,800. Unlocks exotic top-shelf flower (Day 5+).</div></div>
+              <div class="htp-vendor-row"><span>💎</span><div><strong>Apex Concentrates</strong> — $2,500. Unlocks Diamonds &amp; Sauce (Day 8+).</div></div>
             </div>
           </div>
 
@@ -805,32 +876,20 @@ class UIManager {
           <div class="htp-section">
             <div class="htp-section-title">📣 Marketing — Fill the Store</div>
             <p class="htp-text">
-              More customers = more sales. Invest in marketing campaigns from the
-              <strong>Marketing</strong> tab at end of day. Campaigns add bonus
-              customers per shift and boost your reputation. Some are temporary,
-              some are permanent.
+              Invest in marketing campaigns at end of day to add more customers per shift and boost reputation.
             </p>
-            <div class="htp-tip">💡 <strong>Tip:</strong> The Loyalty Card Program ($400) is permanent — buy it as soon as you can afford it.</div>
-          </div>
-
-          <!-- ── REPUTATION ── -->
-          <div class="htp-section">
-            <div class="htp-section-title">⭐ Reputation</div>
-            <p class="htp-text">
-              Every successful sale builds your reputation. Upsells give a bigger boost.
-              Higher reputation unlocks more High Roller customers and increases your
-              daily foot traffic naturally. Watch the green bar in the HUD.
-            </p>
+            <div class="htp-tip">💡 The Loyalty Card Program ($400) is permanent — buy it as soon as you can.</div>
           </div>
 
           <!-- ── TIPS ── -->
           <div class="htp-section htp-tips-section">
             <div class="htp-section-title">🔥 Pro Tips</div>
-            <div class="htp-tip">🎯 Always offer an add-on — even if the customer says no, there's no downside.</div>
-            <div class="htp-tip">📈 Unlock vendors before marketing — new products bring new customer types organically.</div>
-            <div class="htp-tip">🏺 BSkone Bongs have the highest margins in the store. The Grand Artist at $320 returns nearly $200 profit per sale.</div>
-            <div class="htp-tip">⏰ A customer's patience bar drains if you ignore them — serve them before it runs out or they leave empty-handed.</div>
-            <div class="htp-tip">🎸 The Grand In-Store Event marketing ($2,200) gives a massive +25 reputation spike — great once you're established.</div>
+            <div class="htp-tip">🔍 Always ask "What are you looking for?" first — recommending the wrong category sends them straight out the door.</div>
+            <div class="htp-tip">✨ The effects hint is your most powerful tool — read it carefully, it often points to a better sale than the obvious choice.</div>
+            <div class="htp-tip">😊 Watch the cart mood emoji — the moment it hits 😐 you're at the limit. One more item and you risk losing the whole sale.</div>
+            <div class="htp-tip">⚡ Speed beats perfection — a quick solid sale beats a slow perfect one when reviews are on the line.</div>
+            <div class="htp-tip">🏺 BSkone Bongs have the highest margins. The Grand Artist ($320) returns nearly $200 profit — worth unlocking BSkone Glass Works early.</div>
+            <div class="htp-tip">🔄 Returning customers are gold — ask about their last visit and nail the follow-up. They're already fans.</div>
           </div>
 
         </div><!-- /htp-body -->
