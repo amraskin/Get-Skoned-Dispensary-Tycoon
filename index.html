@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0A0A0A">
+  <title>Get Skoned — Dispensary Tycoon</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ── Rotate-to-landscape hint (shown on portrait phones) ── -->
+<div id="rotate-hint">
+  <span class="rotate-icon">📱</span>
+  <h2>ROTATE YOUR DEVICE</h2>
+  <p>Get Skoned plays in landscape mode.<br>Turn your phone sideways to play!</p>
+</div>
+
+<!-- Hidden YouTube player — audio only (1×1 px) -->
+<div id="yt-player" style="position:fixed;bottom:-10px;left:-10px;width:1px;height:1px;opacity:0;pointer-events:none;"></div>
+
+<div id="game-container">
+
+  <!-- ── Canvas: store interior scene ── -->
+  <canvas id="store-canvas"></canvas>
+
+  <!-- ── HUD ── -->
+  <div id="panel-hud" style="display:none">
+    <img class="hud-logo" src="img/logo.png" alt="Skones">
+    <div class="hud-sep"></div>
+    <div class="hud-item">
+      <span class="hud-label">Cash</span>
+      <span class="hud-value" id="hud-money">$500</span>
+    </div>
+    <div class="hud-sep"></div>
+    <div class="hud-item">
+      <span class="hud-label">Day</span>
+      <span class="hud-value" id="hud-day">1</span>
+    </div>
+    <div class="hud-sep"></div>
+    <div class="hud-item">
+      <span class="hud-label">Shift</span>
+      <span class="hud-value" id="hud-shift">1 / 3</span>
+    </div>
+    <div class="hud-sep"></div>
+    <div class="hud-item">
+      <span class="hud-label">Customers</span>
+      <span class="hud-value" id="hud-customers">0</span>
+    </div>
+    <div class="hud-sep"></div>
+    <div class="hud-item">
+      <span class="hud-label">Reputation</span>
+      <span class="hud-value" id="hud-rep">10</span>
+    </div>
+    <div class="hud-rep-container">
+      <div class="hud-rep-track">
+        <div class="hud-rep-fill" id="hud-rep-bar" style="width:10%"></div>
+      </div>
+    </div>
+    <div class="hud-sep"></div>
+    <!-- Music toggle button -->
+    <button class="hud-music-btn muted" id="btn-music-toggle" title="Play music">🔇</button>
+    <!-- How to Play shortcut -->
+    <button class="hud-help-btn" id="btn-howtoplay-hud" title="How to Play">?</button>
+  </div>
+
+  <!-- ── Main Menu ── -->
+  <div id="panel-menu" style="display:flex">
+    <img class="menu-logo" src="img/logo.png" alt="Skones Dispensary">
+    <div class="menu-sub">Dispensary Tycoon</div>
+    <div class="menu-categories">
+      <span class="menu-cat">🌿</span>
+      <span class="menu-cat">🍬</span>
+      <span class="menu-cat">💨</span>
+      <span class="menu-cat">💎</span>
+      <span class="menu-cat">🪄</span>
+      <span class="menu-cat">🏺</span>
+    </div>
+    <p class="menu-desc">
+      Run your own cannabis dispensary. Serve customers, master the upsell,
+      build vendor partnerships, and grow your reputation into an empire.
+    </p>
+    <button class="btn btn-brand btn-big" id="btn-start">Open for Business</button>
+    <button class="btn menu-howtoplay-link" id="btn-howtoplay-menu">📖 How to Play</button>
+  </div>
+
+  <!-- ── Service Panel (shown when serving a customer) ── -->
+  <div id="panel-service" style="display:none"></div>
+
+  <!-- ── End-of-Day Panel ── -->
+  <div id="panel-eod" style="display:none"></div>
+
+  <!-- ── Vendor Panel ── -->
+  <div id="panel-vendor" style="display:none"></div>
+
+  <!-- ── Marketing Panel ── -->
+  <div id="panel-marketing" style="display:none"></div>
+
+  <!-- ── How to Play Panel ── -->
+  <div id="panel-howtoplay" style="display:none"></div>
+
+  <!-- ── Notification Toast ── -->
+  <div id="panel-notification" class="notification"></div>
+
+  <!-- ── Star Review Toast ── -->
+  <div id="panel-review" style="display:none"></div>
+
+</div>
+
+<!-- ── Scripts (load order matters) ── -->
+<script src="js/config.js"></script>
+<script src="js/music.js"></script>
+<script src="js/renderer.js"></script>
+<script src="js/customer.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/game.js"></script>
+
+</body>
+</html>
