@@ -49,58 +49,76 @@ const CONFIG = {
 
 const PRODUCTS = {
   flower: [
-    { id:'fl1', name:'House Blend',     price:25,  cost:10, tier:1, desc:'A smooth everyday smoke.',           effect:'Mellow & Relaxing'   },
-    { id:'fl2', name:'Blue Dream',      price:45,  cost:18, tier:1, desc:'Classic sativa-dominant hybrid.',    effect:'Uplifting & Creative'},
-    { id:'fl3', name:'Wedding Cake',    price:65,  cost:25, tier:2, desc:'Sweet earthy indica — fan fave.',    effect:'Relaxing & Euphoric' },
-    { id:'fl4', name:'Runtz',           price:85,  cost:33, tier:2, desc:'Fruity hybrid, top-shelf taste.',    effect:'Happy & Talkative'   },
-    { id:'fl5', name:'Jealousy',        price:105, cost:40, tier:3, desc:'Exotic premium strain, very rare.',  effect:'Full-Body Bliss'     },
+    { id:'fl1', name:'House Blend',       price:25,  cost:10, tier:1, desc:'A smooth everyday smoke.',                effect:'Mellow & Relaxing'   },
+    { id:'fl2', name:'Blue Dream',        price:45,  cost:18, tier:1, desc:'Classic sativa-dominant hybrid.',         effect:'Uplifting & Creative'},
+    { id:'fl6', name:'Sour Diesel',       price:38,  cost:15, tier:1, desc:'Fuel-forward sativa, energizing kick.',   effect:'Energetic & Focused' },
+    { id:'fl3', name:'Wedding Cake',      price:65,  cost:25, tier:2, desc:'Sweet earthy indica — fan fave.',         effect:'Relaxing & Euphoric' },
+    { id:'fl4', name:'Runtz',             price:85,  cost:33, tier:2, desc:'Fruity hybrid, top-shelf taste.',         effect:'Happy & Talkative'   },
+    { id:'fl5', name:'Jealousy',          price:105, cost:40, tier:3, desc:'Exotic premium strain, very rare.',       effect:'Full-Body Bliss'     },
   ],
   prerolls: [
-    { id:'pr1', name:'House Pre-roll',      price:8,  cost:3,  tier:1, desc:'Simple, affordable, ready to go.',     effect:'Quick & Easy'       },
-    { id:'pr2', name:'Infused Pre-roll',    price:15, cost:6,  tier:1, desc:'Dusted with kief for extra kick.',     effect:'Extra Potent'       },
-    { id:'pr3', name:'King Size 3-Pack',    price:28, cost:11, tier:2, desc:'Three kings — great value bundle.',    effect:'Share the Love'     },
-    { id:'pr4', name:'PUFF Infused King',   price:38, cost:15, tier:2, desc:'Premium infused king-size.',           effect:'Long-Lasting High'  },
-    { id:'pr5', name:'Diamond Infused',     price:55, cost:21, tier:3, desc:'Coated in THCa diamonds & sauce.',     effect:'Next Level'         },
+    { id:'pr1', name:'House Pre-roll',    price:8,   cost:3,  tier:1, desc:'Simple, affordable, ready to go.',        effect:'Quick & Easy'        },
+    { id:'pr2', name:'Infused Pre-roll',  price:15,  cost:6,  tier:1, desc:'Dusted with kief for extra kick.',        effect:'Extra Potent'        },
+    { id:'pr6', name:'Cone 2-Pack',       price:12,  cost:5,  tier:1, desc:'Two smooth cones, great value.',          effect:'Smooth & Easy'       },
+    { id:'pr3', name:'King Size 3-Pack',  price:28,  cost:11, tier:2, desc:'Three kings — great value bundle.',       effect:'Share the Love'      },
+    { id:'pr4', name:'PUFF Infused King', price:38,  cost:15, tier:2, desc:'Premium infused king-size.',              effect:'Long-Lasting High'   },
+    { id:'pr5', name:'Diamond Infused',   price:55,  cost:21, tier:3, desc:'Coated in THCa diamonds & sauce.',        effect:'Next Level'          },
   ],
   edibles: [
-    { id:'ed1', name:'Gummies 10mg',        price:15, cost:5,  tier:1, desc:'Perfect for beginners.',               effect:'Mild & Pleasant'    },
-    { id:'ed2', name:'Chocolate Bar 50mg',  price:25, cost:9,  tier:1, desc:'Classic infused chocolate.',           effect:'Smooth & Mellow'    },
-    { id:'ed3', name:'Premium Gummies 100mg',price:42, cost:16, tier:2, desc:'Full-spectrum, artisan gummies.',     effect:'Deep Relaxation'    },
-    { id:'ed4', name:'Nano Gummies 200mg',  price:58, cost:22, tier:2, desc:'Fast-acting nano technology.',         effect:'Fast & Powerful'    },
-    { id:'ed5', name:'Luxury Chocolate Box',price:85, cost:32, tier:3, desc:'Artisan multi-flavor collection.',     effect:'Indulgent Bliss'    },
+    { id:'ed1', name:'Gummies 10mg',         price:15,  cost:5,  tier:1, desc:'Perfect for beginners.',               effect:'Mild & Pleasant'     },
+    { id:'ed2', name:'Chocolate Bar 50mg',   price:25,  cost:9,  tier:1, desc:'Classic infused chocolate.',           effect:'Smooth & Mellow'     },
+    { id:'ed6', name:'Mints 5mg x10',        price:18,  cost:6,  tier:1, desc:'Micro-dose mints — super discreet.',   effect:'Subtle & Controlled' },
+    { id:'ed3', name:'Premium Gummies 100mg',price:42,  cost:16, tier:2, desc:'Full-spectrum, artisan gummies.',      effect:'Deep Relaxation'     },
+    { id:'ed4', name:'Nano Gummies 200mg',   price:58,  cost:22, tier:2, desc:'Fast-acting nano technology.',         effect:'Fast & Powerful'     },
+    { id:'ed5', name:'Luxury Chocolate Box', price:85,  cost:32, tier:3, desc:'Artisan multi-flavor collection.',     effect:'Indulgent Bliss'     },
   ],
   vapes: [
-    { id:'vp1', name:'500mg Cartridge',     price:35, cost:13, tier:1, desc:'Affordable entry-level cart.',         effect:'Smooth & Discreet'  },
-    { id:'vp2', name:'1g Cartridge',        price:55, cost:21, tier:1, desc:'Full-gram, great everyday value.',     effect:'Long-Lasting'       },
-    { id:'vp3', name:'Live Resin Cart',     price:78, cost:30, tier:2, desc:'Full-spectrum live resin flavor.',     effect:'Flavorful & Potent' },
-    { id:'vp4', name:'Rosin Cartridge',     price:98, cost:38, tier:2, desc:'Solventless rosin — top quality.',    effect:'Pure & Powerful'    },
-    { id:'vp5', name:'All-In-One Device',   price:125,cost:48, tier:3, desc:'Premium disposable device.',          effect:'Convenience & Power'},
+    { id:'vp1', name:'500mg Cartridge',   price:35,  cost:13, tier:1, desc:'Affordable entry-level cart.',            effect:'Smooth & Discreet'   },
+    { id:'vp2', name:'1g Cartridge',      price:55,  cost:21, tier:1, desc:'Full-gram, great everyday value.',        effect:'Long-Lasting'        },
+    { id:'vp6', name:'Disposable Vape',   price:28,  cost:10, tier:1, desc:'All-in-one, no charging needed.',         effect:'Simple & Portable'   },
+    { id:'vp3', name:'Live Resin Cart',   price:78,  cost:30, tier:2, desc:'Full-spectrum live resin flavor.',        effect:'Flavorful & Potent'  },
+    { id:'vp4', name:'Rosin Cartridge',   price:98,  cost:38, tier:2, desc:'Solventless rosin — top quality.',       effect:'Pure & Powerful'     },
+    { id:'vp5', name:'All-In-One Device', price:125, cost:48, tier:3, desc:'Premium disposable device.',             effect:'Convenience & Power' },
   ],
   concentrate: [
-    { id:'cn1', name:'Live Resin 1g',       price:45, cost:17, tier:1, desc:'Classic live resin extract.',          effect:'Flavorful & Potent' },
-    { id:'cn2', name:'Badder 1g',           price:65, cost:25, tier:1, desc:'Smooth, creamy consistency.',          effect:'Balanced & Smooth'  },
-    { id:'cn3', name:'Sugar Wax 1g',        price:78, cost:30, tier:2, desc:'Crystalline sugar-wax texture.',       effect:'Intense & Clear'    },
-    { id:'cn4', name:'Live Rosin 1g',       price:95, cost:36, tier:2, desc:'Solventless, top-tier extract.',       effect:'Rich & Full'        },
-    { id:'cn5', name:'Diamonds & Sauce',    price:125,cost:48, tier:3, desc:'Pure THCa diamonds in terpene sauce.', effect:'Maximum Potency'    },
+    { id:'cn1', name:'Live Resin 1g',    price:45,  cost:17, tier:1, desc:'Classic live resin extract.',             effect:'Flavorful & Potent'  },
+    { id:'cn2', name:'Badder 1g',        price:65,  cost:25, tier:1, desc:'Smooth, creamy consistency.',             effect:'Balanced & Smooth'   },
+    { id:'cn6', name:'Crumble 0.5g',     price:30,  cost:11, tier:1, desc:'Dry, crumbly — easy to handle.',          effect:'Clean & Crisp'       },
+    { id:'cn3', name:'Sugar Wax 1g',     price:78,  cost:30, tier:2, desc:'Crystalline sugar-wax texture.',          effect:'Intense & Clear'     },
+    { id:'cn4', name:'Live Rosin 1g',    price:95,  cost:36, tier:2, desc:'Solventless, top-tier extract.',          effect:'Rich & Full'         },
+    { id:'cn5', name:'Diamonds & Sauce', price:125, cost:48, tier:3, desc:'Pure THCa diamonds in terpene sauce.',    effect:'Maximum Potency'     },
   ],
 
-  // ── BSkone Bongs ── handcrafted glass pieces (see display case)
+  // ── BSkone Bongs ── handcrafted glass pieces
   bskone_bongs: [
-    { id:'bk1', name:'BSkone Mini',          price:45,  cost:18, tier:1, desc:'Compact 6" clear glass starter piece.',         effect:'Quick & Smooth'      },
-    { id:'bk2', name:'BSkone Classic Beaker',price:95,  cost:38, tier:1, desc:'Timeless 10" beaker base, everyday reliable.',   effect:'Cool & Filtered'     },
-    { id:'bk3', name:'BSkone Artisan Tube',  price:150, cost:58, tier:2, desc:'12" hand-blown colored borosilicate glass.',     effect:'Rich & Buttery'      },
-    { id:'bk4', name:'BSkone Signature',     price:220, cost:85, tier:2, desc:'14" artist-colored statement piece.',            effect:'Showroom Quality'    },
-    { id:'bk5', name:'BSkone Grand Artist',  price:320, cost:124,tier:3, desc:'18" large-format collector\'s masterpiece.',     effect:'The Ultimate Piece'  },
+    { id:'bk1', name:'BSkone Mini',           price:45,  cost:18,  tier:1, desc:'Compact 6" clear glass starter piece.',        effect:'Quick & Smooth'      },
+    { id:'bk6', name:'BSkone Twisted',        price:65,  cost:25,  tier:1, desc:'8" twisted neck — stylish and smooth.',        effect:'Smooth & Stylish'    },
+    { id:'bk2', name:'BSkone Classic Beaker', price:95,  cost:38,  tier:1, desc:'Timeless 10" beaker base, everyday reliable.', effect:'Cool & Filtered'     },
+    { id:'bk3', name:'BSkone Artisan Tube',   price:150, cost:58,  tier:2, desc:'12" hand-blown colored borosilicate glass.',   effect:'Rich & Buttery'      },
+    { id:'bk4', name:'BSkone Signature',      price:220, cost:85,  tier:2, desc:'14" artist-colored statement piece.',          effect:'Showroom Quality'    },
+    { id:'bk5', name:'BSkone Grand Artist',   price:320, cost:124, tier:3, desc:'18" large-format collector\'s masterpiece.',   effect:'The Ultimate Piece'  },
   ],
 };
 
 const CATEGORY_META = {
-  flower:       { label:'Flower',        icon:'🌿', color:'#4A8A40' },
-  prerolls:     { label:'Pre-rolls',     icon:'🪄', color:'#8A6A30' },
-  edibles:      { label:'Edibles',       icon:'🍬', color:'#C04080' },
-  vapes:        { label:'Vapes',         icon:'💨', color:'#3080B0' },
-  concentrate:  { label:'Concentrate',   icon:'💎', color:'#6840A0' },
-  bskone_bongs: { label:'BSkone Bongs',  icon:'🏺', color:'#9B6520' },
+  flower:       { label:'Flower',       icon:'🌿', color:'#4A8A40',
+    smartAlts:  ['prerolls','bskone_bongs'],
+    altKeywords:['convenient','ready','go','quick','lazy','prep','spark','piece','display','invest','glass'] },
+  prerolls:     { label:'Pre-rolls',    icon:'🪄', color:'#8A6A30',
+    smartAlts:  ['flower'],
+    altKeywords:['smoke','roll','bowl','pack','grind','blend','own'] },
+  edibles:      { label:'Edibles',      icon:'🍬', color:'#C04080',
+    smartAlts:  ['vapes'],
+    altKeywords:['discreet','portable','pocket','carry','move','small','smell'] },
+  vapes:        { label:'Vapes',        icon:'💨', color:'#3080B0',
+    smartAlts:  ['concentrate','edibles'],
+    altKeywords:['eat','food','slow','long','mellow','dab','rig','tolerance','strong'] },
+  concentrate:  { label:'Concentrate', icon:'💎', color:'#6840A0',
+    smartAlts:  ['vapes'],
+    altKeywords:['portable','pocket','discreet','move','carry'] },
+  bskone_bongs: { label:'BSkone Bongs',icon:'🏺', color:'#9B6520',
+    smartAlts:  ['flower'],
+    altKeywords:['smoke','daily','use','session','hit','bowl'] },
 };
 
 // ============================================================
@@ -292,7 +310,8 @@ const CUSTOMER_TYPES = [
     desc: 'Knows exactly what they want and won\'t go over budget.',
     upsellChance: 0.05,
     addonChance: 0.15,
-    budgetMultiplier: 0.8,   // their budget is 80% of tier-1 price
+    budgetMultiplier: 0.8,
+    cartTolerance: 1,   // just wants their one thing
     color: '#7090A8',
     outfits: ['👕', '🧢'],
     frequency: 0.30,
@@ -304,6 +323,7 @@ const CUSTOMER_TYPES = [
     upsellChance: 0.40,
     addonChance: 0.45,
     budgetMultiplier: 1.2,
+    cartTolerance: 2,   // open to one extra
     color: '#78A870',
     outfits: ['🧥', '👒'],
     frequency: 0.35,
@@ -315,6 +335,7 @@ const CUSTOMER_TYPES = [
     upsellChance: 0.65,
     addonChance: 0.60,
     budgetMultiplier: 1.6,
+    cartTolerance: 3,   // loves building a haul
     color: '#A07840',
     outfits: ['🥼', '🎩'],
     frequency: 0.25,
@@ -326,6 +347,7 @@ const CUSTOMER_TYPES = [
     upsellChance: 0.90,
     addonChance: 0.75,
     budgetMultiplier: 2.2,
+    cartTolerance: 4,   // take everything
     color: '#A06088',
     outfits: ['🥻', '🎓'],
     frequency: 0.10,
@@ -404,35 +426,39 @@ const CUSTOMER_VAGUE_DIALOGUES = {
   ],
 };
 
+// Effect hints contain subtle keywords that trigger smart-alternative sales.
+// e.g. a flower customer saying "convenient" opens the door for a preroll suggestion.
 const CATEGORY_EFFECT_HINTS = {
-  flower:       [
-    "Something to smoke — looking to vibe out tonight.",
-    "A good smoke to unwind after a long day.",
-    "Want to roll something nice, you know?",
+  flower: [
+    "I like to smoke but I'm always on the go — something convenient would be nice.",  // → prerolls smart alt
+    "Want to invest in a nice piece for home smoke sessions.",                          // → bskone_bongs smart alt
+    "Just looking to pack a bowl tonight and relax.",                                  // standard
+    "Something to smoke with friends this weekend.",                                   // standard
   ],
-  prerolls:     [
-    "Something ready to go — I don't want to prep anything.",
-    "Already rolled is ideal. In and out.",
-    "Convenient, no setup, just spark and go.",
+  prerolls: [
+    "I usually like to roll my own — like to control the blend.",                      // → flower smart alt
+    "Need something I can just spark and go. No prep, I'm in a rush.",                 // standard
+    "Convenient and ready to go — that's all I need.",                                 // standard
   ],
-  edibles:      [
-    "I'd rather eat something today, honestly.",
-    "Something I can take on the go — not trying to smoke.",
-    "Want longer, more mellow effects — eat it.",
+  edibles: [
+    "Need something really discreet and portable — can't have any smell on me.",       // → vapes smart alt
+    "I'd rather eat something. Want that slow, mellow, longer effect.",                // standard
+    "Not trying to smoke today — something I can take before my plans.",               // standard
   ],
-  vapes:        [
-    "Need something discreet — always on the move.",
-    "Small, portable, no smell. That's my vibe.",
-    "Something I can use anywhere, low-key.",
+  vapes: [
+    "Want something slow and mellow — honestly I'd eat it if the option's right.",     // → edibles smart alt
+    "I've got a high tolerance. Need something strong like a dab situation.",           // → concentrate smart alt
+    "Small, pocket-friendly, no smell. I move around constantly.",                     // standard
+    "Something discreet I can carry anywhere without drawing attention.",               // standard
   ],
-  concentrate:  [
-    "Got a high tolerance, I need something serious.",
-    "I dab — what do you have for that?",
-    "Looking for something for my rig at home.",
+  concentrate: [
+    "I dab at home but sometimes I need something portable I can carry.",              // → vapes smart alt
+    "High tolerance — I need something powerful. My rig is at home.",                  // standard
+    "I want maximum potency. The normal stuff doesn't really hit me.",                 // standard
   ],
   bskone_bongs: [
-    "Actually looking to invest in a nice piece.",
-    "Want something I can display and use at home.",
-    "A friend has one of your bongs — I want one.",
+    "I want something for my daily smoke sessions — functional and good looking.",     // → flower smart alt
+    "Looking to invest in a quality glass piece I can display at home.",               // standard
+    "A friend has one of your bongs. I've been thinking about getting one.",           // standard
   ],
 };
