@@ -242,138 +242,171 @@ class Game {
   }
 
   // ─── Sale logic ───────────────────────────────────────────
-  attemptSale(customer, productId, addonId) {
-    const product = Object.values(PRODUCTS).flat().find(p => p.id === productId);
-    if (!product) return;
+  // cart = [{ id, name, price, cost, category, isAddon }, ...]
+  attemptSale(customer, cart) {
+    if (!cart || cart.length === 0) return;
 
-    // Wrong category — customer walks out angry
-    const productCat = Object.keys(PRODUCTS).find(cat => PRODUCTS[cat].some(p => p.id === productId));
-    if (productCat !== customer.category) {
+    const elapsed  = (Date.now() - (this._serviceStartTime || Date.now())) / 1000;
+    const prevH    = this.customerHistory[customer.name] || { visits: 0 };
+    const recordBad = () => {
+      this.customerHistory[customer.name] = { ...prevH, satisfied: false, visits: (prevH.visits||0)+1 };
+    };
+
+    // ── Find primary product (first non-addon in cart) ─────
+    const primaryEntry = cart.find(i => !i.isAddon);
+    if (!primaryEntry) return;
+    const primaryProduct = Object.values(PRODUCTS).flat().find(p => p.id === primaryEntry.id);
+    if (!primaryProduct) return;
+    const primaryCat = Object.keys(PRODUCTS).find(cat => PRODUCTS[cat].some(p => p.id === primaryEntry.id));
+
+    // ── Wrong category check ───────────────────────────────
+    if (primaryCat !== customer.category) {
+      const isSmartAlt = this._isSmartAlternative(customer, primaryCat);
+
+      if (!isSmartAlt) {
+        const wantedMeta = CATEGORY_META[customer.category];
+        this.ui.showNotification(
+          `😤 <strong>${customer.name}</strong> wanted ${wantedMeta.icon} ${wantedMeta.label} — they're leaving!`, 'error'
+        );
+        recordBad();
+        customer.serve(false);
+        this._maybeShowReview(false, 0.55, elapsed);
+        this._finishSale(customer, null, null);
+        return;
+      }
+
+      // Smart alternative — 65% acceptance
+      if (Math.random() > 0.65) {
+        const wantedMeta = CATEGORY_META[customer.category];
+        this.ui.showNotification(
+          `🤔 <strong>${customer.name}</strong> wasn't convinced — they really wanted ${wantedMeta.icon} ${wantedMeta.label}`, 'warning'
+        );
+        customer.serve(false);
+        this._finishSale(customer, null, null);
+        return;
+      }
+      // Smart sell success!
+      const altMeta    = CATEGORY_META[primaryCat];
       const wantedMeta = CATEGORY_META[customer.category];
+      this.renderer.spawnSaleText(this.canvas.width/2, this.canvas.height*0.38, '🌟 SMART SELL!', '#9B59B6');
       this.ui.showNotification(
-        `😤 <strong>${customer.name}</strong> wanted ${wantedMeta.icon} ${wantedMeta.label} — they're leaving!`,
-        'error'
+        `🌟 <strong>Smart Sell!</strong> ${customer.name} came in for ${wantedMeta.icon} but you read the room — ${altMeta.icon} ${altMeta.label} was perfect!`,
+        'success', 4000
       );
-      const prevH = this.customerHistory[customer.name] || { visits: 0 };
-      this.customerHistory[customer.name] = { ...prevH, satisfied: false, visits: (prevH.visits || 0) + 1 };
+      this.reputation = Math.min(100, this.reputation + 2);
+    }
+
+    // ── Oversell check ─────────────────────────────────────
+    const tolerance = customer.typeDef.cartTolerance || 2;
+    if (cart.length > tolerance + 1) {
+      this.ui.showNotification(
+        `😤 <strong>${customer.name}</strong> felt oversold — walked out without buying anything!`, 'error'
+      );
+      recordBad();
       customer.serve(false);
-      const elapsed1 = (Date.now() - (this._serviceStartTime || Date.now())) / 1000;
-      this._maybeShowReview(false, 0.55, elapsed1);
+      this._maybeShowReview(false, 0.75, elapsed);
       this._finishSale(customer, null, null);
       return;
     }
 
-    const isUpsell    = product.price > customer.budget;
-    let   productSold = false;
-    let   addonSold   = false;
-
-    // Determine if customer accepts the product
-    if (!isUpsell) {
-      // In-budget: always accepted
-      productSold = true;
-    } else {
-      // Over budget: acceptance based on type + how much over
-      const overPct = (product.price - customer.budget) / customer.budget;
-      let   chance  = customer.typeDef.upsellChance;
-      if (overPct > 0.4) chance *= 0.5;  // steep upsell = harder
+    // ── Primary product upsell check ───────────────────────
+    const isUpsell = primaryProduct.price > customer.budget;
+    if (isUpsell) {
+      const overPct = (primaryProduct.price - customer.budget) / customer.budget;
+      let chance = customer.typeDef.upsellChance;
+      if (overPct > 0.4) chance *= 0.5;
       if (overPct > 0.8) chance *= 0.3;
-      productSold = Math.random() < chance;
-    }
-
-    if (!productSold) {
-      // Customer declined
-      this.ui.showNotification(
-        `<strong>${customer.name}</strong> passed on the ${product.name}. Budget too tight!`,
-        'warning'
-      );
-      const prevH = this.customerHistory[customer.name] || { visits: 0 };
-      this.customerHistory[customer.name] = { ...prevH, satisfied: false, visits: (prevH.visits || 0) + 1 };
-      customer.serve(false);
-      const elapsed2 = (Date.now() - (this._serviceStartTime || Date.now())) / 1000;
-      this._maybeShowReview(false, 0.20, elapsed2);
-      this._finishSale(customer, null, null);
-      return;
-    }
-
-    // Product sold
-    let   addon     = null;
-    let   addonProfit = 0;
-    if (addonId && addonId !== 'none') {
-      addon = ADDONS.find(a => a.id === addonId);
-      if (addon) {
-        const acceptsAddon = Math.random() < customer.typeDef.addonChance;
-        if (acceptsAddon) {
-          addonSold   = true;
-          addonProfit = addon.price - addon.cost;
-          this.dayAddons++;
-        } else {
-          addon = null;
-        }
+      if (Math.random() >= chance) {
+        this.ui.showNotification(
+          `<strong>${customer.name}</strong> passed on ${primaryProduct.name}. Budget too tight!`, 'warning'
+        );
+        recordBad();
+        customer.serve(false);
+        this._maybeShowReview(false, 0.20, elapsed);
+        this._finishSale(customer, null, null);
+        return;
       }
     }
 
-    const productProfit = product.price - product.cost;
-    const totalRevenue  = product.price + (addonSold ? (ADDONS.find(a => a.id === addonId)?.price || 0) : 0);
-    const totalProfit   = productProfit + addonProfit;
+    // ── Process each cart item ─────────────────────────────
+    let totalRevenue = 0, totalProfit = 0, totalCost = 0;
+    const soldItems = [], skippedNames = [];
 
-    this.money       += totalRevenue;
-    this.dayRevenue  += totalRevenue;
-    this.dayCost     += product.cost + (addonSold ? (ADDONS.find(a => a.id === addonId)?.cost || 0) : 0);
+    cart.forEach((item, idx) => {
+      let product = Object.values(PRODUCTS).flat().find(p => p.id === item.id);
+      if (!product) product = ADDONS.find(a => a.id === item.id);
+      if (!product) return;
 
+      if (item.id === primaryEntry.id) {
+        // Primary always goes through (already passed upsell check)
+        soldItems.push(item);
+        totalRevenue += product.price;
+        totalProfit  += product.price - product.cost;
+        totalCost    += product.cost;
+        return;
+      }
+
+      // Extra items — acceptance chance decreases as cart grows
+      const extraPos    = idx;
+      const acceptChance = extraPos < tolerance ? 0.80 : 0.35;
+      if (Math.random() < acceptChance) {
+        soldItems.push(item);
+        totalRevenue += product.price;
+        totalProfit  += product.price - product.cost;
+        totalCost    += product.cost;
+      } else {
+        skippedNames.push(product.name);
+      }
+    });
+
+    if (soldItems.length === 0) { this._finishSale(customer, null, null); return; }
+
+    // ── Finalize ───────────────────────────────────────────
+    this.money      += totalRevenue;
+    this.dayRevenue += totalRevenue;
+    this.dayCost    += totalCost;
     if (isUpsell) this.dayUpsells++;
+    if (soldItems.length > 1) this.dayAddons += soldItems.length - 1;
+    this.reputation = Math.min(100, this.reputation + (isUpsell ? 1.5 : 0.8));
 
-    // Reputation
-    const repGain = isUpsell ? 1.5 : 0.8;
-    this.reputation = Math.min(100, this.reputation + repGain);
+    this.renderer.spawnMoneyParticle(this.canvas.width/2, this.canvas.height*0.5, totalRevenue);
+    if (isUpsell)
+      this.renderer.spawnSaleText(this.canvas.width/2+60, this.canvas.height*0.45, 'UPSELL! 🔥', CONFIG.colors.upsell);
+    if (soldItems.length > 1)
+      this.renderer.spawnSaleText(this.canvas.width/2-60, this.canvas.height*0.45, `+${soldItems.length-1} extras!`, CONFIG.colors.brandGreen);
 
-    // Spawn money float
-    this.renderer.spawnMoneyParticle(
-      this.canvas.width / 2,
-      this.canvas.height * 0.5,
-      totalRevenue
-    );
-
-    if (isUpsell) {
-      this.renderer.spawnSaleText(
-        this.canvas.width / 2 + 60,
-        this.canvas.height * 0.45,
-        'UPSELL! 🔥',
-        CONFIG.colors.upsell
-      );
-    }
-
-    if (addonSold && addon) {
-      this.renderer.spawnSaleText(
-        this.canvas.width / 2 - 60,
-        this.canvas.height * 0.45,
-        `+${addon.name}`,
-        CONFIG.colors.brandGreen
-      );
-    }
-
-    // Notification
-    let msg = `✅ Sold <strong>${product.name}</strong> for $${product.price}`;
-    if (addonSold && addon) msg += ` + ${addon.icon} ${addon.name} ($${addon.price})`;
-    if (isUpsell)            msg += ` — <span style="color:#C86820">Upsell!</span>`;
+    let msg = soldItems.length === 1
+      ? `✅ Sold <strong>${primaryProduct.name}</strong> for $${primaryProduct.price}`
+      : `✅ Sold <strong>${soldItems.length} items</strong> — $${totalRevenue} total`;
+    if (isUpsell)          msg += ` — <span style="color:#C86820">Upsell!</span>`;
+    if (skippedNames.length) msg += ` <span style="color:#999;font-size:11px">(passed on ${skippedNames.join(', ')})</span>`;
     msg += ` | Profit: $${totalProfit.toFixed(0)}`;
 
     this.ui.showNotification(msg, 'success');
     this._playTone(isUpsell ? 880 : 660);
-    const elapsed = (Date.now() - (this._serviceStartTime || Date.now())) / 1000;
     this._maybeShowReview(true, 0.38, elapsed);
 
-    // Record purchase history for this customer name
-    const prevH = this.customerHistory[customer.name] || { visits: 0 };
     this.customerHistory[customer.name] = {
-      productName: product.name,
-      productId:   productId,
-      category:    productCat,
+      productName: primaryProduct.name,
+      productId:   primaryEntry.id,
+      category:    primaryCat,
       satisfied:   true,
-      visits:      (prevH.visits || 0) + 1,
+      visits:      (prevH.visits||0) + 1,
     };
 
     customer.serve(true);
-    this._finishSale(customer, product, addonSold ? ADDONS.find(a => a.id === addonId) : null);
+    this._finishSale(customer, primaryProduct, null);
+  }
+
+  // ── Smart alternative detection ────────────────────────────
+  // Returns true if the offered category makes sense given the customer's effect hint
+  _isSmartAlternative(customer, offeredCat) {
+    const wantedMeta  = CATEGORY_META[customer.category];
+    const offeredMeta = CATEGORY_META[offeredCat];
+    if (!wantedMeta?.smartAlts?.includes(offeredCat)) return false;
+    const hint     = (customer.effectHint || '').toLowerCase();
+    const keywords = offeredMeta?.altKeywords || [];
+    return keywords.some(kw => hint.includes(kw));
   }
 
   skipCustomer(customer) {
