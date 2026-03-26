@@ -179,6 +179,19 @@ class Game {
     // Remove done customers
     this.customers = this.customers.filter(c => c.state !== 'done');
 
+    // Open service panel when current customer reaches counter (frame-safe, no setTimeout)
+    if (this._speechDelay > 0) this._speechDelay -= dt;
+    if (this.currentCustomer &&
+        this.currentCustomer.state === CustomerState.AT_COUNTER &&
+        this.state !== GS.SERVING &&
+        this._speechDelay <= 0) {
+      this.state = GS.SERVING;
+      this._serviceStartTime = Date.now();
+      const unlockedProducts = this._buildUnlockedInventory();
+      const history = this.customerHistory[this.currentCustomer.name] || null;
+      this.ui.renderServicePanel(this.currentCustomer, unlockedProducts, history);
+    }
+
     // Spawn from queue
     if (this.shiftActive && this.state === GS.PLAYING) {
       this.serveTimer += dt;
@@ -218,18 +231,8 @@ class Game {
 
   _serveNext(customer) {
     this.currentCustomer = customer;
+    this._speechDelay    = 1.5; // seconds to let player read the speech bubble
     customer.approach();
-
-    // Pause on the customer so the player can read their speech bubble
-    setTimeout(() => {
-      if (customer.state === CustomerState.AT_COUNTER) {
-        this.state = GS.SERVING;
-        this._serviceStartTime = Date.now(); // start the service timer
-        const unlockedProducts = this._buildUnlockedInventory();
-        const history = this.customerHistory[customer.name] || null;
-        this.ui.renderServicePanel(customer, unlockedProducts, history);
-      }
-    }, 2200);  // 2.2 s — long enough to read the customer dialogue
   }
 
   _buildUnlockedInventory() {

@@ -32,6 +32,11 @@ class Customer {
     this.declined     = false;
     this.patience     = 100; // 0–100; drops if ignored
 
+    // Dance
+    this.danceTimer   = 3 + Math.random() * 10; // seconds until first dance check
+    this.isDancing    = false;
+    this.danceTime    = 0;
+
     // Budget = based on tier-1 max price in their desired category × multiplier
     const tier1Products = PRODUCTS[cat].filter(p => p.tier === 1);
     const maxTier1Price = Math.max(...tier1Products.map(p => p.price));
@@ -159,9 +164,33 @@ class Customer {
       if (this.speechTimer <= 0) this.speechBubble = null;
     }
 
+    // Dance — only when WAITING (standing in line)
+    if (this.state === CustomerState.WAITING) {
+      if (this.isDancing) {
+        this.danceTime -= dt;
+        if (this.danceTime <= 0) {
+          this.isDancing = false;
+          this.danceTimer = 5 + Math.random() * 12; // wait before next dance
+        }
+      } else {
+        this.danceTimer -= dt;
+        if (this.danceTimer <= 0 && Math.random() < 0.4) {
+          this.isDancing = true;
+          this.danceTime = 2 + Math.random() * 3;
+          this.showSpeech(['🎵', '🕺', '🎶', '😎'][Math.floor(Math.random() * 4)], 2000);
+        } else if (this.danceTimer <= 0) {
+          this.danceTimer = 4 + Math.random() * 8;
+        }
+      }
+    } else {
+      this.isDancing = false;
+    }
+
     // Bob
     if (this.state !== CustomerState.WAITING && this.state !== CustomerState.AT_COUNTER) {
       this.bobOffset = Math.sin(this.walkCycle) * 3;
+    } else if (this.isDancing) {
+      this.bobOffset = Math.sin(this.walkCycle * 1.8) * 5; // bigger, faster bounce when dancing
     } else {
       this.bobOffset = Math.sin(this.walkCycle * 0.3) * 1;
     }
@@ -218,8 +247,10 @@ class Customer {
 
   drawBody(ctx, time) {
     const isWalking = this.state !== CustomerState.WAITING && this.state !== CustomerState.AT_COUNTER;
-    const legSwing  = isWalking ? Math.sin(this.walkCycle) * 12 : 0;
-    const armSwing  = isWalking ? Math.sin(this.walkCycle) * 10 : 0;
+    const legSwing  = isWalking ? Math.sin(this.walkCycle) * 12
+                    : this.isDancing ? Math.sin(this.walkCycle * 1.8) * 18 : 0;
+    const armSwing  = isWalking ? Math.sin(this.walkCycle) * 10
+                    : this.isDancing ? Math.sin(this.walkCycle * 1.8) * 40 + 30 : 0; // arms raised when dancing
 
     // Shadow
     ctx.fillStyle = 'rgba(0,0,0,0.10)';
