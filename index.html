@@ -1,11 +1,143 @@
-📱
-ROTATE YOUR DEVICE
-Get Skoned plays in landscape mode. Turn your phone sideways to play!
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Get Skoned — Dispensary Tycoon 🌿</title>
 
+  <!-- ── Social / Open Graph preview ── -->
+  <meta property="og:title"       content="Get Skoned — Dispensary Tycoon 🌿" />
+  <meta property="og:description" content="Run your own cannabis dispensary. Serve customers, master the upsell, build vendor partnerships, and grow your reputation into an empire." />
+  <meta property="og:image"       content="https://amraskin.github.io/Get-Skoned-Dispensary-Tycoon/img/social-preview.png" />
+  <meta property="og:url"         content="https://amraskin.github.io/Get-Skoned-Dispensary-Tycoon" />
+  <meta property="og:type"        content="website" />
+  <meta name="twitter:card"       content="summary_large_image" />
+  <meta name="twitter:title"      content="Get Skoned — Dispensary Tycoon 🌿" />
+  <meta name="twitter:description" content="Run your own cannabis dispensary. Serve customers, master the upsell, build vendor partnerships, and grow your reputation into an empire." />
+  <meta name="twitter:image"      content="https://amraskin.github.io/Get-Skoned-Dispensary-Tycoon/img/social-preview.png" />
 
-Dispensary Tycoon
-🌿 🍬 💨 💎 🪄 🏺
-Run your own cannabis dispensary. Serve customers, master the upsell, build vendor partnerships, and grow your reputation into an empire.
-Open for Business
-📖 How to Play
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
 
+  <!-- ── Rotate-device overlay (shown only in portrait) ── -->
+  <div id="rotate-overlay">
+    <div id="rotate-icon">📱</div>
+    <div id="rotate-title">ROTATE YOUR DEVICE</div>
+    <div id="rotate-msg">Get Skoned plays in landscape mode. Turn your phone sideways to play!</div>
+  </div>
+
+  <!-- ── Main game container ── -->
+  <div id="game-container">
+
+    <!-- Background canvas (store art) -->
+    <canvas id="store-canvas"></canvas>
+
+    <!-- ── HUD bar ── -->
+    <div id="panel-hud" style="display:none">
+      <img src="img/logo.png" alt="Skones" class="hud-logo" />
+      <div class="hud-sep"></div>
+      <div class="hud-item">
+        <span class="hud-label">💵</span>
+        <span class="hud-value" id="hud-money">$0</span>
+      </div>
+      <div class="hud-sep"></div>
+      <div class="hud-item">
+        <span class="hud-label">📅</span>
+        <span class="hud-value" id="hud-day">Day 1</span>
+      </div>
+      <div class="hud-sep"></div>
+      <div class="hud-item">
+        <span class="hud-label">⏱</span>
+        <span class="hud-value" id="hud-shift">Shift 1 / 3</span>
+      </div>
+      <div class="hud-sep"></div>
+      <div class="hud-item">
+        <span class="hud-label">👥</span>
+        <span class="hud-value" id="hud-customers">Today: 0</span>
+      </div>
+      <div class="hud-sep"></div>
+      <div class="hud-item hud-rep-item">
+        <span class="hud-label">⭐</span>
+        <span class="hud-value" id="hud-rep">Rep: 10</span>
+        <div class="hud-rep-track">
+          <div class="hud-rep-fill" id="hud-rep-bar" style="width:10%"></div>
+        </div>
+      </div>
+      <div class="hud-spacer"></div>
+      <button class="hud-icon-btn" id="btn-howtoplay-hud" title="How to Play">📖</button>
+      <button class="hud-icon-btn" id="btn-music-toggle" title="Toggle music">🔊</button>
+    </div>
+
+    <!-- ── Main menu ── -->
+    <div id="panel-menu" style="display:none">
+      <div class="menu-bg-logo">
+        <img src="img/logo.png" alt="Skones" class="menu-logo" />
+      </div>
+      <div class="menu-content">
+        <div class="menu-title">Dispensary Tycoon</div>
+        <div class="menu-icons">🌿 🍬 💨 💎 🪄 🏺</div>
+        <div class="menu-desc">
+          Run your own cannabis dispensary. Serve customers, master the upsell,
+          build vendor partnerships, and grow your reputation into an empire.
+        </div>
+        <button class="btn btn-brand btn-start" id="btn-start">Open for Business</button>
+        <button class="btn btn-secondary btn-htp-menu" id="btn-howtoplay-menu">📖 How to Play</button>
+      </div>
+    </div>
+
+    <!-- ── Service panel ── -->
+    <div id="panel-service" style="display:none"></div>
+
+    <!-- ── End-of-day panel ── -->
+    <div id="panel-eod" style="display:none"></div>
+
+    <!-- ── Vendor hall panel ── -->
+    <div id="panel-vendor" style="display:none"></div>
+
+    <!-- ── Marketing panel ── -->
+    <div id="panel-marketing" style="display:none"></div>
+
+    <!-- ── How to Play panel ── -->
+    <div id="panel-howtoplay" style="display:none"></div>
+
+    <!-- ── Sale notification toast ── -->
+    <div id="panel-notification" class="notification" style="display:none"></div>
+
+    <!-- ── Review toast ── -->
+    <div id="panel-review" class="review-panel" style="display:none"></div>
+
+    <!-- ── Hidden YouTube player node (music.js targets this) ── -->
+    <div id="yt-player" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"></div>
+
+  </div><!-- /#game-container -->
+
+  <!-- ── Scripts (load order matters) ── -->
+  <script src="js/music.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/customer.js"></script>
+  <script src="js/renderer.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/game.js"></script>
+
+  <script>
+    // ── Boot ──────────────────────────────────────────────────
+    window.addEventListener('DOMContentLoaded', () => {
+      const game = new Game();
+      game.init();
+    });
+
+    // ── Portrait / landscape guard ────────────────────────────
+    function checkOrientation() {
+      const overlay = document.getElementById('rotate-overlay');
+      if (!overlay) return;
+      const isPortrait = window.innerHeight > window.innerWidth;
+      overlay.style.display = isPortrait ? 'flex' : 'none';
+    }
+    window.addEventListener('resize',           checkOrientation);
+    window.addEventListener('orientationchange', checkOrientation);
+    window.addEventListener('DOMContentLoaded',  checkOrientation);
+  </script>
+
+</body>
+</html>
