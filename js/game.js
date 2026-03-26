@@ -69,22 +69,92 @@ class Game {
     this._loop = this._loop.bind(this);
   }
 
+  // ─── Save / Load ──────────────────────────────────────────
+  saveGame() {
+    try {
+      const data = {
+        version:            2,
+        money:              this.money,
+        day:                this.day,
+        reputation:         this.reputation,
+        unlockedProductIds: [...this.unlockedProductIds],
+        unlockedAddonIds:   [...this.unlockedAddonIds],
+        vendors:            this.vendors.map(v => ({ id: v.id, unlocked: v.unlocked, available: v.available })),
+        activeCampaigns:    this.activeCampaigns,
+        customerHistory:    this.customerHistory,
+        savedAt:            Date.now(),
+      };
+      localStorage.setItem('get-skoned-save', JSON.stringify(data));
+    } catch (e) { /* storage unavailable */ }
+  }
+
+  loadGame() {
+    try {
+      const raw = localStorage.getItem('get-skoned-save');
+      if (!raw) return false;
+      const d = JSON.parse(raw);
+      if (!d || d.version !== 2) return false;
+      this.money              = d.money;
+      this.day                = d.day;
+      this.reputation         = d.reputation;
+      this.unlockedProductIds = new Set(d.unlockedProductIds || []);
+      this.unlockedAddonIds   = new Set(d.unlockedAddonIds   || []);
+      this.activeCampaigns    = d.activeCampaigns  || [];
+      this.customerHistory    = d.customerHistory  || {};
+      (d.vendors || []).forEach(sv => {
+        const v = this.vendors.find(x => x.id === sv.id);
+        if (v) { v.unlocked = sv.unlocked; v.available = sv.available; }
+      });
+      return true;
+    } catch (e) { return false; }
+  }
+
+  static hasSave() {
+    try { return !!localStorage.getItem('get-skoned-save'); } catch (e) { return false; }
+  }
+
+  clearSave() {
+    try { localStorage.removeItem('get-skoned-save'); } catch (e) {}
+  }
+
+  calculateScore() {
+    return Math.round(this.money + this.reputation * 50 + this.day * 100);
+  }
+
   // ─── Start / state transitions ────────────────────────────
   init() {
     // Initialise music player (loads YouTube IFrame API in background)
     if (window.musicPlayer) window.musicPlayer.init();
 
-    this.ui.renderMenu();
+    const hasSave = Game.hasSave();
+    this.ui.renderMenu(hasSave);
 
-    // "Open for Business" — start game AND kick off music on first user gesture
+    // "Open for Business" — new game
     document.getElementById('btn-start')?.addEventListener('click', () => {
       if (window.musicPlayer) window.musicPlayer.start();
+      this.clearSave();
       this.startDay();
+    });
+
+    // "Continue" — load saved game
+    document.getElementById('btn-continue')?.addEventListener('click', () => {
+      if (window.musicPlayer) window.musicPlayer.start();
+      if (this.loadGame()) {
+        this.state = GS.PLAYING;
+        this.ui.showOnly(null);
+        this.ui.updateHUD();
+        this._startShift();
+      }
     });
 
     // Music toggle button in HUD
     document.getElementById('btn-music-toggle')?.addEventListener('click', () => {
       if (window.musicPlayer) window.musicPlayer.toggle();
+    });
+
+    // Leaderboard — from main menu
+    document.getElementById('btn-leaderboard-menu')?.addEventListener('click', () => {
+      this.ui.renderLeaderboard('menu');
     });
 
     // How to Play — from the main menu
@@ -456,6 +526,7 @@ class Game {
   }
 
   _endDay() {
+    this.saveGame(); // ← auto-save
     this.state = GS.EOD;
     const stats = {
       day:             this.day,
@@ -466,6 +537,7 @@ class Game {
       addonsSold:      this.dayAddons,
       reputation:      this.reputation,
       money:           this.money,
+      score:           this.calculateScore(),
     };
     this.ui.renderEOD(stats);
   }

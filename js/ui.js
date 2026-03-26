@@ -13,7 +13,7 @@ class UIManager {
   // ─── Build all panels ─────────────────────────────────────
   _init() {
     // Collect panel references
-    ['menu','hud','service','eod','vendor','marketing','notification','howtoplay','review']
+    ['menu','hud','service','eod','vendor','marketing','notification','howtoplay','review','leaderboard']
       .forEach(id => { this.panels[id] = document.getElementById(`panel-${id}`); });
   }
 
@@ -49,7 +49,40 @@ class UIManager {
   }
 
   // ─── Main menu ────────────────────────────────────────────
-  renderMenu() {
+  renderMenu(hasSave = false) {
+    const panel = this.panels.menu;
+    if (!panel) { this.showOnly('menu'); return; }
+
+    const savedDate = (() => {
+      try {
+        const d = JSON.parse(localStorage.getItem('get-skoned-save') || '{}');
+        if (!d.savedAt) return '';
+        return new Date(d.savedAt).toLocaleDateString();
+      } catch (e) { return ''; }
+    })();
+
+    panel.innerHTML = `
+      <div class="menu-bg-logo">
+        <img src="img/logo.png" alt="Skones" class="menu-logo" />
+      </div>
+      <div class="menu-content">
+        <div class="menu-title">Dispensary Tycoon</div>
+        <div class="menu-icons">🌿 🍬 💨 💎 🪄 🏺</div>
+        <div class="menu-desc">
+          Run your own cannabis dispensary. Serve customers, master the upsell,
+          build vendor partnerships, and grow your reputation into an empire.
+        </div>
+        ${hasSave ? `
+          <div class="menu-save-badge">💾 Save found — ${savedDate}</div>
+          <button class="btn btn-brand btn-start" id="btn-continue">▶ Continue</button>
+          <button class="btn btn-secondary btn-htp-menu" id="btn-start">🆕 New Game</button>
+        ` : `
+          <button class="btn btn-brand btn-start" id="btn-start">Open for Business</button>
+        `}
+        <button class="btn btn-secondary btn-htp-menu" id="btn-leaderboard-menu">🏆 Leaderboard</button>
+        <button class="btn btn-secondary btn-htp-menu" id="btn-howtoplay-menu">📖 How to Play</button>
+      </div>
+    `;
     this.showOnly('menu');
   }
 
@@ -535,12 +568,45 @@ class UIManager {
             Next Day →
           </button>
         </div>
+
+        <div class="eod-leaderboard-section">
+          <div class="eod-score-line">🏆 Your score: <strong>${stats.score.toLocaleString()}</strong></div>
+          ${LEADERBOARD.enabled ? `
+            <div class="eod-submit-row" id="eod-submit-row">
+              <input class="eod-name-input" id="eod-player-name" type="text" maxlength="20" placeholder="Your name" />
+              <button class="btn btn-secondary eod-submit-btn" id="btn-submit-score">Submit Score</button>
+              <button class="btn btn-secondary eod-submit-btn" id="btn-view-lb">View Leaderboard</button>
+            </div>
+          ` : `
+            <div class="eod-lb-note">
+              <button class="btn btn-secondary eod-submit-btn" id="btn-view-lb">🏆 View Leaderboard</button>
+            </div>
+          `}
+        </div>
       </div>
     `;
 
     document.getElementById('btn-visit-vendors')?.addEventListener('click', () => this.game.showVendors());
     document.getElementById('btn-open-marketing')?.addEventListener('click', () => this.game.showMarketing());
     document.getElementById('btn-next-day')?.addEventListener('click', () => this.game.startDay());
+    document.getElementById('btn-view-lb')?.addEventListener('click', () => this.renderLeaderboard('eod'));
+
+    document.getElementById('btn-submit-score')?.addEventListener('click', async () => {
+      const nameEl = document.getElementById('eod-player-name');
+      const name = (nameEl?.value || '').trim();
+      if (!name) { nameEl?.focus(); return; }
+      const btn = document.getElementById('btn-submit-score');
+      if (btn) btn.textContent = 'Submitting…';
+      const ok = await LEADERBOARD.submitScore(name, stats.score, stats.day, Math.round(stats.reputation));
+      const row = document.getElementById('eod-submit-row');
+      if (row) {
+        row.innerHTML = ok
+          ? `<span class="eod-submit-ok">✅ Score submitted! <button class="btn btn-secondary eod-submit-btn" id="btn-view-lb-after">View Leaderboard</button></span>`
+          : `<span style="color:#c04040">❌ Couldn't submit — check your connection.</span>`;
+        document.getElementById('btn-view-lb-after')?.addEventListener('click', () => this.renderLeaderboard('eod'));
+      }
+    });
+
     this.showOnly('eod');
   }
 
@@ -918,5 +984,81 @@ class UIManager {
       this.panels.howtoplay.style.display = 'none';
       if (this.panels.hud) this.panels.hud.style.display = 'flex';
     }
+  }
+
+  // ─── Leaderboard panel ────────────────────────────────────
+  async renderLeaderboard(returnTo = 'menu') {
+    const panel = this.panels.leaderboard;
+    if (!panel) return;
+
+    panel.innerHTML = `
+      <div class="modal-container lb-panel">
+        <div class="modal-header">
+          <h2>🏆 Leaderboard</h2>
+        </div>
+        <div id="lb-content" class="lb-content">
+          ${LEADERBOARD.enabled
+            ? '<div class="lb-loading">⏳ Loading scores…</div>'
+            : `<div class="lb-setup">
+                <div class="lb-setup-title">🔧 Leaderboard Setup Required</div>
+                <p>To enable the public leaderboard, create a free Supabase account and follow these steps:</p>
+                <ol class="lb-setup-steps">
+                  <li>Go to <strong>supabase.com</strong> → New Project</li>
+                  <li>Open <strong>SQL Editor</strong> and run:<br>
+                    <code>CREATE TABLE leaderboard (id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY, player_name TEXT, score INT, days_played INT, reputation INT, created_at TIMESTAMPTZ DEFAULT NOW());<br>
+                    ALTER TABLE leaderboard ENABLE ROW LEVEL SECURITY;<br>
+                    CREATE POLICY "public read"  ON leaderboard FOR SELECT USING (true);<br>
+                    CREATE POLICY "public write" ON leaderboard FOR INSERT WITH CHECK (true);</code>
+                  </li>
+                  <li>Copy your <strong>Project URL</strong> and <strong>anon public key</strong> from Settings → API</li>
+                  <li>Paste them into <strong>js/leaderboard.js</strong> (url and key fields)</li>
+                </ol>
+              </div>`
+          }
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="btn-lb-back">← Back</button>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('btn-lb-back')?.addEventListener('click', () => {
+      if (returnTo === 'eod') {
+        this.game.showEOD();
+      } else {
+        this.renderMenu(Game.hasSave());
+      }
+    });
+
+    this.showOnly('leaderboard');
+
+    if (!LEADERBOARD.enabled) return;
+
+    const scores = await LEADERBOARD.getTopScores(10);
+    const content = document.getElementById('lb-content');
+    if (!content) return;
+
+    if (!scores || scores.length === 0) {
+      content.innerHTML = '<div class="lb-empty">No scores yet — be the first to submit!</div>';
+      return;
+    }
+
+    const medals = ['🥇', '🥈', '🥉'];
+    content.innerHTML = `
+      <table class="lb-table">
+        <thead><tr><th>#</th><th>Player</th><th>Score</th><th>Day</th><th>Rep</th></tr></thead>
+        <tbody>
+          ${scores.map((s, i) => `
+            <tr class="${i < 3 ? 'lb-medal-' + i : ''}">
+              <td>${medals[i] || i + 1}</td>
+              <td>${s.player_name}</td>
+              <td>${Number(s.score).toLocaleString()}</td>
+              <td>${s.days_played}</td>
+              <td>${s.reputation}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
   }
 }
