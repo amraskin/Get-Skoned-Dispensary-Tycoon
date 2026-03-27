@@ -6,7 +6,7 @@
 
 const LEADERBOARD = {
   // ── Fill these in after creating your Supabase project ──
-  url: 'https://your-project.supabase.co',   // e.g. 'https://abcdefgh.supabase.co'
+  url: 'https://wphwexkmgdqkgufzpfyl.supabase.co',   // e.g. 'https://abcdefgh.supabase.co'
   key: 'sb_publishable_pYXEXHkZ5wW24T01LZcLig_9M41oQEI',   // your project's anon/public key
 
   get enabled() {
