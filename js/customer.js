@@ -176,9 +176,7 @@ class Customer {
       if (this.isDancing) {
         this.danceTime -= dt;
         // Spin angle for spin/headspin types
-        if (this.danceType === 'spin' || this.danceType === 'headspin') {
-          this.spinAngle = (this.spinAngle + 0.10) % (Math.PI * 2);
-        }
+        this.spinAngle = (this.spinAngle + 0.10) % (Math.PI * 2);
         if (this.danceTime <= 0) {
           this.isDancing  = false;
           this.spinAngle  = 0;
@@ -254,11 +252,16 @@ class Customer {
     ctx.translate(x, y);
 
     if (this.isDancing && this.danceType === 'headspin') {
-      ctx.translate(0, -18);         // float up slightly
-      ctx.rotate(this.spinAngle);    // spin continuously
-      ctx.scale(sx, -1);             // flip upside down — on their head!
+      ctx.translate(0, -18);
+      ctx.rotate(this.spinAngle);
+      ctx.scale(sx, -1);
     } else if (this.isDancing && this.danceType === 'spin') {
-      ctx.rotate(this.spinAngle);    // full-body spin
+      ctx.rotate(this.spinAngle);
+      ctx.scale(sx, 1);
+    } else if (this.isDancing && this.danceType === 'sway') {
+      // Side-to-side sway with a slight tilt
+      ctx.translate(Math.sin(this.spinAngle * 2) * 8, 0);
+      ctx.rotate(Math.sin(this.spinAngle * 2) * 0.18);
       ctx.scale(sx, 1);
     } else {
       ctx.scale(sx, 1);
