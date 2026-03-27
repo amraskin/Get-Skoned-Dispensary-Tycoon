@@ -94,7 +94,9 @@ class Game {
       const raw = localStorage.getItem('get-skoned-save');
       if (!raw) return false;
       const d = JSON.parse(raw);
-      if (!d || d.version !== 2) return false;
+      if (!d) return false;
+      // Accept version 1 saves (migrate) or version 2
+      if (d.version !== 1 && d.version !== 2) return false;
       this.money              = d.money;
       this.day                = d.day;
       this.reputation         = d.reputation;
