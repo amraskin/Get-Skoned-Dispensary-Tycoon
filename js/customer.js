@@ -32,6 +32,13 @@ class Customer {
     this.declined     = false;
     this.patience     = 100; // 0–100; drops if ignored
 
+    // Dance
+    this.danceTimer   = 1 + Math.random() * 4; // short wait before first check
+    this.isDancing    = false;
+    this.danceTime    = 0;
+    this.danceType    = 'sway'; // 'sway' | 'spin' | 'headspin'
+    this.spinAngle    = 0;
+
     // Budget = based on tier-1 max price in their desired category × multiplier
     const tier1Products = PRODUCTS[cat].filter(p => p.tier === 1);
     const maxTier1Price = Math.max(...tier1Products.map(p => p.price));
@@ -73,6 +80,11 @@ class Customer {
 
   pickVagueDialogue(type) {
     const lines = CUSTOMER_VAGUE_DIALOGUES[type] || CUSTOMER_VAGUE_DIALOGUES.curious;
+    return lines[Math.floor(Math.random() * lines.length)];
+  }
+
+  pickReturningDialogue(type) {
+    const lines = CUSTOMER_RETURNING_DIALOGUES[type] || CUSTOMER_RETURNING_DIALOGUES.curious;
     return lines[Math.floor(Math.random() * lines.length)];
   }
 
@@ -159,9 +171,49 @@ class Customer {
       if (this.speechTimer <= 0) this.speechBubble = null;
     }
 
+    // Dance — only when WAITING (standing in line)
+    if (this.state === CustomerState.WAITING) {
+      if (this.isDancing) {
+        this.danceTime -= dt;
+        // Spin angle for spin/headspin types
+        if (this.danceType === 'spin' || this.danceType === 'headspin') {
+          this.spinAngle = (this.spinAngle + 0.10) % (Math.PI * 2);
+        }
+        if (this.danceTime <= 0) {
+          this.isDancing  = false;
+          this.spinAngle  = 0;
+          this.danceTimer = 3 + Math.random() * 6;
+        }
+      } else {
+        this.danceTimer -= dt;
+        if (this.danceTimer <= 0) {
+          if (Math.random() < 0.75) { // 75% chance to dance when timer fires
+            const r = Math.random();
+            this.danceType = r < 0.35 ? 'sway' : r < 0.65 ? 'spin' : 'headspin';
+            this.isDancing = true;
+            this.danceTime = 2.5 + Math.random() * 3;
+            const emojis = {
+              sway:      ['👍', '😁', '🎵', '✨'],
+              spin:      ['🌀', '😎', '🎶', '💫'],
+              headspin:  ['🤸', '🔥', '💥', '🕺'],
+            };
+            const set = emojis[this.danceType];
+            this.showSpeech(set[Math.floor(Math.random() * set.length)], 2200);
+          } else {
+            this.danceTimer = 2 + Math.random() * 4;
+          }
+        }
+      }
+    } else {
+      this.isDancing = false;
+      this.spinAngle = 0;
+    }
+
     // Bob
     if (this.state !== CustomerState.WAITING && this.state !== CustomerState.AT_COUNTER) {
       this.bobOffset = Math.sin(this.walkCycle) * 3;
+    } else if (this.isDancing) {
+      this.bobOffset = Math.sin(this.walkCycle * 1.8) * 5; // bigger, faster bounce when dancing
     } else {
       this.bobOffset = Math.sin(this.walkCycle * 0.3) * 1;
     }
@@ -200,7 +252,17 @@ class Customer {
 
     ctx.save();
     ctx.translate(x, y);
-    ctx.scale(sx, 1);
+
+    if (this.isDancing && this.danceType === 'headspin') {
+      ctx.translate(0, -18);         // float up slightly
+      ctx.rotate(this.spinAngle);    // spin continuously
+      ctx.scale(sx, -1);             // flip upside down — on their head!
+    } else if (this.isDancing && this.danceType === 'spin') {
+      ctx.rotate(this.spinAngle);    // full-body spin
+      ctx.scale(sx, 1);
+    } else {
+      ctx.scale(sx, 1);
+    }
 
     this.drawBody(ctx, time);
     ctx.restore();
@@ -218,8 +280,10 @@ class Customer {
 
   drawBody(ctx, time) {
     const isWalking = this.state !== CustomerState.WAITING && this.state !== CustomerState.AT_COUNTER;
-    const legSwing  = isWalking ? Math.sin(this.walkCycle) * 12 : 0;
-    const armSwing  = isWalking ? Math.sin(this.walkCycle) * 10 : 0;
+    const legSwing  = isWalking ? Math.sin(this.walkCycle) * 12
+                    : this.isDancing ? Math.sin(this.walkCycle * 1.8) * 18 : 0;
+    const armSwing  = isWalking ? Math.sin(this.walkCycle) * 10
+                    : this.isDancing ? Math.sin(this.walkCycle * 1.8) * 40 + 30 : 0; // arms raised when dancing
 
     // Shadow
     ctx.fillStyle = 'rgba(0,0,0,0.10)';
@@ -301,10 +365,18 @@ class Customer {
     ctx.arc(6, -63, 2.5, 0, Math.PI * 2);
     ctx.fill();
 
-    // Mouth (smile or neutral)
+    // Mouth — big smile when dancing or satisfied, frown when declined, neutral otherwise
     ctx.strokeStyle = '#1A1A1A';
     ctx.lineWidth = 1.5;
-    if (this.satisfied) {
+    if (this.isDancing) {
+      // Big open grin
+      ctx.beginPath();
+      ctx.arc(0, -56, 8, 0.1, Math.PI - 0.1);
+      ctx.stroke();
+      // Teeth
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(-6, -61, 12, 5);
+    } else if (this.satisfied) {
       ctx.beginPath();
       ctx.arc(0, -57, 6, 0.2, Math.PI - 0.2);
       ctx.stroke();
