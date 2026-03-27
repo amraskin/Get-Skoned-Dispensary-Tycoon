@@ -625,6 +625,8 @@ body {
   gap: 12px;
   padding: 16px 24px;
   overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .vendor-card {
@@ -695,6 +697,8 @@ body {
   gap: 12px;
   padding: 16px 24px;
   overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .marketing-card {
