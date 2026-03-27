@@ -399,6 +399,33 @@ const UPSELL_LINES = [
 //  CONVERSATION SYSTEM — vague opening lines & effect hints
 // ============================================================
 
+const CUSTOMER_RETURNING_DIALOGUES = {
+  budget: [
+    "Back again — you know the deal.",
+    "Hey, it's me. Need the usual.",
+    "Came back — last time was solid.",
+    "Quick stop, same as always.",
+  ],
+  curious: [
+    "Couldn't stay away after last time!",
+    "Back to see what's new.",
+    "You've got me hooked on this place.",
+    "Had to come back — real good last time.",
+  ],
+  enthusiast: [
+    "Been thinking about coming back all week.",
+    "You're officially my spot now.",
+    "Back to see what dropped lately.",
+    "Quality here is unmatched — had to return.",
+  ],
+  highroller: [
+    "I've told my people about this place.",
+    "Back for the premium experience.",
+    "You've earned a loyal customer.",
+    "Only place I come to now.",
+  ],
+};
+
 const CUSTOMER_VAGUE_DIALOGUES = {
   budget: [
     "Just stopping by to check things out.",
