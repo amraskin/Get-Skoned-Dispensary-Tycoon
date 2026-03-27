@@ -33,7 +33,7 @@ class Customer {
     this.patience     = 100; // 0–100; drops if ignored
 
     // Dance
-    this.danceTimer   = 1 + Math.random() * 4; // short wait before first check
+    this.danceTimer   = 0.5 + Math.random() * 1.5; // fires quickly so waiting customers dance
     this.isDancing    = false;
     this.danceTime    = 0;
     this.danceType    = 'sway'; // 'sway' | 'spin' | 'headspin'
@@ -180,7 +180,7 @@ class Customer {
         if (this.danceTime <= 0) {
           this.isDancing  = false;
           this.spinAngle  = 0;
-          this.danceTimer = 3 + Math.random() * 6;
+          this.danceTimer = 1 + Math.random() * 3;
         }
       } else {
         this.danceTimer -= dt;
@@ -198,7 +198,7 @@ class Customer {
             const set = emojis[this.danceType];
             this.showSpeech(set[Math.floor(Math.random() * set.length)], 2200);
           } else {
-            this.danceTimer = 2 + Math.random() * 4;
+            this.danceTimer = 0.5 + Math.random() * 1.5;
           }
         }
       }
