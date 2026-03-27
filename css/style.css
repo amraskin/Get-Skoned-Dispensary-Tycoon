@@ -569,8 +569,8 @@ body {
   flex-wrap: wrap;
 }
 
-/* ─── Modal Panels (vendor / marketing) ──────────────────── */
-#panel-vendor, #panel-marketing {
+/* ─── Modal Panels (vendor / marketing / leaderboard) ───── */
+#panel-vendor, #panel-marketing, #panel-leaderboard {
   position: absolute;
   inset: 0;
   background: rgba(0,0,0,0.65);
