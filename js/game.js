@@ -59,9 +59,10 @@ class Game {
     this.shiftActive     = false;
 
     // ── Game state ──
-    this.state      = GS.MENU;
-    this.lastTime   = 0;
-    this._raf       = null;
+    this.state        = GS.MENU;
+    this.lastTime     = 0;
+    this._raf         = null;
+    this._speechDelay = 0;
 
     // ── Audio context (simple tones) ──
     this._audioCtx  = null;
@@ -136,14 +137,11 @@ class Game {
       this.startDay();
     });
 
-    // "Continue" — load saved game
+    // "Continue" — load saved game then start the next day
     document.getElementById('btn-continue')?.addEventListener('click', () => {
       if (window.musicPlayer) window.musicPlayer.start();
       if (this.loadGame()) {
-        this.state = GS.PLAYING;
-        this.ui.showOnly(null);
-        this.ui.updateHUD();
-        this._startShift();
+        this.startDay(); // increments day, resets daily stats, starts fresh shift
       }
     });
 
@@ -278,14 +276,10 @@ class Game {
         }
       }
 
-      // Shift over?
-      if (this.customerQueue.length === 0 && this.customers.every(c => c.state === 'done' || c.state === CustomerState.SERVED)) {
-        if (this.customers.length === 0 || this.customers.every(c => c.state === 'done')) {
-          this.shiftActive = false;
-          if (this.state === GS.PLAYING) {
-            this._endShift();
-          }
-        }
+      // Shift over — queue empty, nobody being served, all customers gone
+      if (this.customerQueue.length === 0 && !this.currentCustomer && this.customers.length === 0) {
+        this.shiftActive = false;
+        this._endShift();
       }
     }
 
@@ -295,6 +289,10 @@ class Game {
 
   _spawnCustomer() {
     const c = new Customer(this.nextCustomerId++, this.canvas.width, this.canvas.height);
+    const hist = this.customerHistory[c.name];
+    if (hist && hist.visits > 0) {
+      c.vagueDialogue = c.pickReturningDialogue(c.typeDef.type);
+    }
     this.customers.push(c);
     this.todayCustomers++;
   }
