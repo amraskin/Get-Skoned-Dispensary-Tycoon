@@ -550,6 +550,7 @@ class Game {
       addonsSold:      this.dayAddons,
       reputation:      this.reputation,
       money:           this.money,
+      score:           this.calculateScore(),
     };
     this.ui.renderEOD(stats);
   }
