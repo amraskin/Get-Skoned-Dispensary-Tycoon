@@ -64,6 +64,10 @@ class MusicPlayer {
               this.playing      = true;
               this._pendingPlay = false;
               this._updateBtn();
+            } else {
+              // Explicitly stop — autoplay:0 isn't always respected by browsers
+              e.target.pauseVideo();
+              e.target.stopVideo();
             }
           },
           onError: (e) => {
