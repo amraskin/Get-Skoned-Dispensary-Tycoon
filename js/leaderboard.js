@@ -6,7 +6,7 @@
 
 const LEADERBOARD = {
   // ── Fill these in after creating your Supabase project ──
-  url: 'https://wphwexkmgdqkgufzpyl.supabase.co',   // e.g. 'https://abcdefgh.supabase.co'
+  url: 'https://wphwexkmgdqkgufzpfyl.supabase.co',   // e.g. 'https://abcdefgh.supabase.co'
   key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndwaHdleGttZ2Rxa2d1ZnpwZnlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NjY4MTcsImV4cCI6MjA5MDE0MjgxN30.LPduHzo1x_8ZbV5F6Xs78erY5SyHIS3_mAyQHQCr6jE',   // your project's anon/public key
 
   get enabled() {
