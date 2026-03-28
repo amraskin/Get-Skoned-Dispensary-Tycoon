@@ -569,8 +569,8 @@ body {
   flex-wrap: wrap;
 }
 
-/* ─── Modal Panels (vendor / marketing) ──────────────────── */
-#panel-vendor, #panel-marketing {
+/* ─── Modal Panels (vendor / marketing / leaderboard) ───── */
+#panel-vendor, #panel-marketing, #panel-leaderboard {
   position: absolute;
   inset: 0;
   background: rgba(0,0,0,0.65);
@@ -625,6 +625,8 @@ body {
   gap: 12px;
   padding: 16px 24px;
   overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .vendor-card {
@@ -695,6 +697,8 @@ body {
   gap: 12px;
   padding: 16px 24px;
   overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .marketing-card {
@@ -1459,6 +1463,73 @@ button, .product-card, .addon-card, .vendor-card,
   font-weight: 600;
   margin-left: 4px;
   vertical-align: middle;
+}
+
+.sp-history-box {
+  background: #1E2A22;
+  border: 1px solid #2A4A32;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+}
+
+.sp-history-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  padding: 3px 0;
+  border-bottom: 1px solid #2A3A2A;
+}
+.sp-history-row:last-child { border-bottom: none; }
+
+.sp-history-visit {
+  color: #888;
+  font-size: 11px;
+  min-width: 72px;
+}
+.sp-history-product {
+  color: #D4EDDA;
+  flex: 1;
+  font-weight: 500;
+}
+.sp-history-spent {
+  color: #5DBF7A;
+  font-weight: 600;
+  font-size: 11px;
+}
+.sp-history-outcome { font-size: 12px; }
+
+.sp-clue-source {
+  font-size: 10px;
+  color: #5DBF7A;
+  font-weight: 400;
+}
+
+.sp-rec-knowbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  background: #1A2E20;
+  border: 1px solid #2A4A30;
+  border-radius: 7px;
+  padding: 6px 10px;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+.sp-rec-knowbar-label {
+  color: #7AAA88;
+  font-size: 11px;
+  margin-right: 2px;
+}
+.sp-rec-knowbar-chip {
+  background: #2A4A32;
+  color: #C8EDD4;
+  border-radius: 12px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 500;
 }
 
 /* ============================================================

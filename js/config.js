@@ -301,6 +301,18 @@ const MARKETING = [
 ];
 
 // ============================================================
+//  CATEGORY WEIGHTS  (must sum to 1.0)
+// ============================================================
+const CATEGORY_WEIGHTS = {
+  flower:       0.27,
+  prerolls:     0.21,
+  edibles:      0.19,
+  vapes:        0.18,
+  concentrate:  0.10,
+  bskone_bongs: 0.05,   // intentionally rare — collector item
+};
+
+// ============================================================
 //  CUSTOMER TYPES
 // ============================================================
 const CUSTOMER_TYPES = [

@@ -4,6 +4,7 @@
 // ============================================================
 
 const CustomerState = {
+  BROWSING:    'browsing',   // walks around store before joining queue
   ENTERING:    'entering',
   WAITING:     'waiting',
   APPROACHING: 'approaching',
@@ -14,17 +15,22 @@ const CustomerState = {
 };
 
 class Customer {
-  constructor(id, canvasWidth, canvasHeight) {
+  constructor(id, canvasWidth, canvasHeight, name = null, excludeCats = []) {
     const typeDef = this.pickType();
-    const name    = CUSTOMER_NAMES[Math.floor(Math.random() * CUSTOMER_NAMES.length)];
-    const cat     = Object.keys(PRODUCTS)[Math.floor(Math.random() * Object.keys(PRODUCTS).length)];
+    const customerName = name || CUSTOMER_NAMES[Math.floor(Math.random() * CUSTOMER_NAMES.length)];
+    const cat     = this.pickCategory(excludeCats);
+
+    // Browse-first behaviour (some customers look around before queuing)
+    const browseFirst    = Math.random() < 0.28;
+    this.browseTargetX   = 260 + Math.random() * 220;
+    this.browseTimer     = 2.2 + Math.random() * 2.5;
 
     this.id            = id;
-    this.name          = name;
+    this.name          = customerName;
     this.typeDef       = typeDef;
     this.type          = typeDef.type;
     this.category      = cat;
-    this.state         = CustomerState.ENTERING;
+    this.state         = browseFirst ? CustomerState.BROWSING : CustomerState.ENTERING;
     this.dialogue      = this.pickDialogue(typeDef.type);
     this.vagueDialogue = this.pickVagueDialogue(typeDef.type);
     this.effectHint    = this.pickEffectHint(cat);
@@ -33,7 +39,7 @@ class Customer {
     this.patience     = 100; // 0–100; drops if ignored
 
     // Dance
-    this.danceTimer   = 1 + Math.random() * 4; // short wait before first check
+    this.danceTimer   = 0.5 + Math.random() * 1.5; // fires quickly so waiting customers dance
     this.isDancing    = false;
     this.danceTime    = 0;
     this.danceType    = 'sway'; // 'sway' | 'spin' | 'headspin'
@@ -61,6 +67,19 @@ class Customer {
     this.outfit   = this.pickOutfit();
     this.speechBubble = null;
     this.speechTimer  = 0;
+  }
+
+  pickCategory(excludeCats = []) {
+    const weights = Object.fromEntries(
+      Object.entries(CATEGORY_WEIGHTS).filter(([k]) => !excludeCats.includes(k))
+    );
+    const total = Object.values(weights).reduce((s, w) => s + w, 0);
+    let r = Math.random() * total;
+    for (const [cat, w] of Object.entries(weights)) {
+      r -= w;
+      if (r <= 0) return cat;
+    }
+    return Object.keys(weights)[0];
   }
 
   pickType() {
@@ -112,6 +131,17 @@ class Customer {
 
     // Destination based on state
     switch (this.state) {
+      case CustomerState.BROWSING:
+        this.facing  = 1;
+        this.targetX = this.browseTargetX;
+        if (Math.abs(this.x - this.targetX) < 4) {
+          this.x = this.targetX;
+          this.browseTimer -= dt;
+          if (!this.speechBubble) this.showSpeech(this.vagueDialogue, (this.browseTimer * 900));
+          if (this.browseTimer <= 0) this.state = CustomerState.ENTERING;
+        }
+        break;
+
       case CustomerState.ENTERING:
         this.facing  = 1;
         this.targetX = this.canvasW * 0.38 + queuePosition * 52;
@@ -176,13 +206,11 @@ class Customer {
       if (this.isDancing) {
         this.danceTime -= dt;
         // Spin angle for spin/headspin types
-        if (this.danceType === 'spin' || this.danceType === 'headspin') {
-          this.spinAngle = (this.spinAngle + 0.10) % (Math.PI * 2);
-        }
+        this.spinAngle = (this.spinAngle + 0.10) % (Math.PI * 2);
         if (this.danceTime <= 0) {
           this.isDancing  = false;
           this.spinAngle  = 0;
-          this.danceTimer = 3 + Math.random() * 6;
+          this.danceTimer = 1 + Math.random() * 3;
         }
       } else {
         this.danceTimer -= dt;
@@ -200,7 +228,7 @@ class Customer {
             const set = emojis[this.danceType];
             this.showSpeech(set[Math.floor(Math.random() * set.length)], 2200);
           } else {
-            this.danceTimer = 2 + Math.random() * 4;
+            this.danceTimer = 0.5 + Math.random() * 1.5;
           }
         }
       }
@@ -254,11 +282,16 @@ class Customer {
     ctx.translate(x, y);
 
     if (this.isDancing && this.danceType === 'headspin') {
-      ctx.translate(0, -18);         // float up slightly
-      ctx.rotate(this.spinAngle);    // spin continuously
-      ctx.scale(sx, -1);             // flip upside down — on their head!
+      ctx.translate(0, -18);
+      ctx.rotate(this.spinAngle);
+      ctx.scale(sx, -1);
     } else if (this.isDancing && this.danceType === 'spin') {
-      ctx.rotate(this.spinAngle);    // full-body spin
+      ctx.rotate(this.spinAngle);
+      ctx.scale(sx, 1);
+    } else if (this.isDancing && this.danceType === 'sway') {
+      // Side-to-side sway with a slight tilt
+      ctx.translate(Math.sin(this.spinAngle * 2) * 8, 0);
+      ctx.rotate(Math.sin(this.spinAngle * 2) * 0.18);
       ctx.scale(sx, 1);
     } else {
       ctx.scale(sx, 1);

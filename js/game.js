@@ -94,7 +94,9 @@ class Game {
       const raw = localStorage.getItem('get-skoned-save');
       if (!raw) return false;
       const d = JSON.parse(raw);
-      if (!d || d.version !== 2) return false;
+      if (!d) return false;
+      // Accept version 1 saves (migrate) or version 2
+      if (d.version !== 1 && d.version !== 2) return false;
       this.money              = d.money;
       this.day                = d.day;
       this.reputation         = d.reputation;
@@ -288,8 +290,20 @@ class Game {
   }
 
   _spawnCustomer() {
-    const c = new Customer(this.nextCustomerId++, this.canvas.width, this.canvas.height);
-    const hist = this.customerHistory[c.name];
+    // Pick name first so we can check history before assigning category
+    const name = CUSTOMER_NAMES[Math.floor(Math.random() * CUSTOMER_NAMES.length)];
+    const hist = this.customerHistory[name];
+
+    // BSkone 14-day cooldown — don't let the same person buy another bong too soon
+    const excludeCats = [];
+    if (hist) {
+      const lastBskone = (hist.recentVisits || []).find(v => v.category === 'bskone_bongs');
+      if (lastBskone && (this.day - lastBskone.day) < 14) {
+        excludeCats.push('bskone_bongs');
+      }
+    }
+
+    const c = new Customer(this.nextCustomerId++, this.canvas.width, this.canvas.height, name, excludeCats);
     if (hist && hist.visits > 0) {
       c.vagueDialogue = c.pickReturningDialogue(c.typeDef.type);
     }
@@ -380,9 +394,9 @@ class Game {
       return;
     }
 
-    // ── Primary product upsell check ───────────────────────
-    const isUpsell = primaryProduct.price > customer.budget;
-    if (isUpsell) {
+    // ── Primary product over-budget check (may cause them to walk) ────────────
+    const primaryOverBudget = primaryProduct.price > customer.budget;
+    if (primaryOverBudget) {
       const overPct = (primaryProduct.price - customer.budget) / customer.budget;
       let chance = customer.typeDef.upsellChance;
       if (overPct > 0.4) chance *= 0.5;
@@ -432,6 +446,9 @@ class Game {
 
     if (soldItems.length === 0) { this._finishSale(customer, null, null); return; }
 
+    // ── Upsell = total cart exceeds customer's budget ──────
+    const isUpsell = totalRevenue > customer.budget;
+
     // ── Finalize ───────────────────────────────────────────
     this.money      += totalRevenue;
     this.dayRevenue += totalRevenue;
@@ -457,12 +474,21 @@ class Game {
     this._playTone(isUpsell ? 880 : 660);
     this._maybeShowReview(true, 0.38, elapsed);
 
-    this.customerHistory[customer.name] = {
+    const newVisit = {
       productName: primaryProduct.name,
-      productId:   primaryEntry.id,
       category:    primaryCat,
+      totalSpent:  totalRevenue,
       satisfied:   true,
-      visits:      (prevH.visits||0) + 1,
+      day:         this.day,
+    };
+    const prevVisits = (prevH.recentVisits || []).slice(0, 1);
+    this.customerHistory[customer.name] = {
+      productName:  primaryProduct.name,
+      productId:    primaryEntry.id,
+      category:     primaryCat,
+      satisfied:    true,
+      visits:       (prevH.visits||0) + 1,
+      recentVisits: [newVisit, ...prevVisits],
     };
 
     customer.serve(true);
@@ -550,6 +576,7 @@ class Game {
       addonsSold:      this.dayAddons,
       reputation:      this.reputation,
       money:           this.money,
+      score:           this.calculateScore(),
     };
     this.ui.renderEOD(stats);
   }
