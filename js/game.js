@@ -459,12 +459,21 @@ class Game {
     this._playTone(isUpsell ? 880 : 660);
     this._maybeShowReview(true, 0.38, elapsed);
 
-    this.customerHistory[customer.name] = {
+    const newVisit = {
       productName: primaryProduct.name,
-      productId:   primaryEntry.id,
       category:    primaryCat,
+      totalSpent:  totalRevenue,
       satisfied:   true,
-      visits:      (prevH.visits||0) + 1,
+      day:         this.day,
+    };
+    const prevVisits = (prevH.recentVisits || []).slice(0, 1);
+    this.customerHistory[customer.name] = {
+      productName:  primaryProduct.name,
+      productId:    primaryEntry.id,
+      category:     primaryCat,
+      satisfied:    true,
+      visits:       (prevH.visits||0) + 1,
+      recentVisits: [newVisit, ...prevVisits],
     };
 
     customer.serve(true);
