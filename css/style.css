@@ -1465,6 +1465,47 @@ button, .product-card, .addon-card, .vendor-card,
   vertical-align: middle;
 }
 
+.sp-history-box {
+  background: #1E2A22;
+  border: 1px solid #2A4A32;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+}
+
+.sp-history-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  padding: 3px 0;
+  border-bottom: 1px solid #2A3A2A;
+}
+.sp-history-row:last-child { border-bottom: none; }
+
+.sp-history-visit {
+  color: #888;
+  font-size: 11px;
+  min-width: 72px;
+}
+.sp-history-product {
+  color: #D4EDDA;
+  flex: 1;
+  font-weight: 500;
+}
+.sp-history-spent {
+  color: #5DBF7A;
+  font-weight: 600;
+  font-size: 11px;
+}
+.sp-history-outcome { font-size: 12px; }
+
+.sp-clue-source {
+  font-size: 10px;
+  color: #5DBF7A;
+  font-weight: 400;
+}
+
 /* ============================================================
    STAR REVIEW TOAST
    ============================================================ */
