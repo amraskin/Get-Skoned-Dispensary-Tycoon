@@ -191,6 +191,8 @@ class Game {
     this.dayUpsells = 0;
     this.dayAddons  = 0;
 
+    this.saveGame(); // save after EOD vendor/marketing purchases, before new day begins
+
     this.state = GS.PLAYING;
     this.ui.showOnly(null); // show HUD, hide all panels
     this.ui.updateHUD();
