@@ -127,28 +127,61 @@ class UIManager {
     const footer = document.getElementById('sp-footer');
     if (!body || !footer) return;
 
-    const isReturning = history && history.visits > 0;
-    const catMeta     = CATEGORY_META[customer.category];
+    const visits  = history?.visits || 0;
+    const catMeta = CATEGORY_META[customer.category];
+
+    // How many questions the player must ask (reduces as customer becomes a regular)
+    // visits 0 = new: 3 questions | visits 1 = returning: 2 | visits 2+ = regular: 1
+    const questionLimit = visits === 0 ? 3 : visits === 1 ? 2 : 1;
+
+    // For returning customers, auto-reveal what you already know
+    if (visits >= 1) this._revealed.category = true;
+
+    // Build recent visit history HTML
+    const recentVisits = history?.recentVisits || (
+      // migrate old flat history format
+      history?.productName ? [{ productName: history.productName, category: history.category, totalSpent: null, satisfied: history.satisfied }] : []
+    );
+    const historyHtml = recentVisits.length ? `
+      <div class="sp-history-box">
+        <div class="sp-convo-label">📖 Purchase history:</div>
+        ${recentVisits.map((v, i) => `
+          <div class="sp-history-row">
+            <span class="sp-history-visit">${i === 0 ? 'Last visit' : '2 visits ago'}</span>
+            <span class="sp-history-product">${CATEGORY_META[v.category]?.icon || ''} ${v.productName}</span>
+            ${v.totalSpent != null ? `<span class="sp-history-spent">$${v.totalSpent}</span>` : ''}
+            <span class="sp-history-outcome">${v.satisfied ? '✅' : '❌'}</span>
+          </div>
+        `).join('')}
+      </div>
+    ` : '';
+
+    const showCategory = questionLimit >= 3;
+    const showBudget   = questionLimit >= 2;
+    const showEffects  = questionLimit >= 1;
 
     body.innerHTML = `
+      ${historyHtml}
       <div class="sp-convo-section">
-        <div class="sp-convo-label">💬 Ask questions to learn what they need:</div>
+        <div class="sp-convo-label">💬 ${visits === 0 ? 'Ask questions to learn what they need:' : visits === 1 ? 'You remember them — ask 2 questions:' : 'You know this regular — just confirm one thing:'}</div>
         <div class="sp-questions" id="sp-questions">
-          <button class="sp-question-btn" id="q-category">🔍 What are you looking for today?</button>
-          <button class="sp-question-btn" id="q-budget">💰 What's your budget like?</button>
-          <button class="sp-question-btn" id="q-effects">✨ What kind of effects are you after?</button>
-          ${isReturning ? '<button class="sp-question-btn" id="q-lastvisit">🔄 How was your last visit?</button>' : ''}
+          ${showCategory ? '<button class="sp-question-btn" id="q-category">🔍 What are you looking for today?</button>' : ''}
+          ${showBudget   ? '<button class="sp-question-btn" id="q-budget">💰 What\'s your budget like?</button>' : ''}
+          ${showEffects  ? '<button class="sp-question-btn" id="q-effects">✨ What kind of effects are you after?</button>' : ''}
         </div>
       </div>
       <div class="sp-clue-box">
-        <div class="sp-clue-title">📋 What you know so far:</div>
-        <div id="sp-clues"><div class="sp-clue-empty">Ask questions to gather info before recommending...</div></div>
+        <div class="sp-clue-title">📋 What you know:</div>
+        <div id="sp-clues"></div>
       </div>
     `;
 
     footer.innerHTML = `
       <button class="btn btn-brand sp-sell-btn" id="btn-make-rec">🛍️ Make a Recommendation →</button>
     `;
+
+    // Seed clues with anything already known
+    this._updateClues(customer, history);
 
     // Wire question buttons
     document.getElementById('q-category')?.addEventListener('click', e => {
@@ -175,19 +208,6 @@ class UIManager {
       this._updateClues(customer, history);
     });
 
-    if (isReturning) {
-      document.getElementById('q-lastvisit')?.addEventListener('click', e => {
-        if (this._revealed.lastVisit) return;
-        this._revealed.lastVisit = true;
-        e.currentTarget.classList.add('asked');
-        const txt = history.satisfied
-          ? `🔄 "${history.productName}? Loved it!" ✅`
-          : `🔄 "Last time wasn't great..." ❌`;
-        e.currentTarget.textContent = txt;
-        this._updateClues(customer, history);
-      });
-    }
-
     document.getElementById('btn-make-rec')?.addEventListener('click', () => {
       this._renderRecommendationPhase(customer, unlockedProducts);
     });
@@ -197,20 +217,16 @@ class UIManager {
     const cluesEl = document.getElementById('sp-clues');
     if (!cluesEl) return;
     const catMeta = CATEGORY_META[customer.category];
-    const items = [];
+    const visits  = history?.visits || 0;
+    const items   = [];
+
     if (this._revealed.category)
-      items.push(`<div class="sp-clue-item">🎯 Wants: <strong>${catMeta.icon} ${catMeta.label}</strong></div>`);
+      items.push(`<div class="sp-clue-item">🎯 Wants: <strong>${catMeta.icon} ${catMeta.label}</strong>${visits >= 1 ? ' <span class="sp-clue-source">(you remember)</span>' : ''}</div>`);
     if (this._revealed.budget)
       items.push(`<div class="sp-clue-item">💰 Budget: <strong>~$${customer.budget}</strong></div>`);
     if (this._revealed.effects)
       items.push(`<div class="sp-clue-item">✨ <em>"${customer.effectHint || 'Something good'}"</em></div>`);
-    if (this._revealed.lastVisit && history) {
-      const icon = history.satisfied ? '✅' : '❌';
-      const txt  = history.satisfied
-        ? `Last bought <strong>${history.productName}</strong> — loved it`
-        : `Last visit didn't go well — make it right`;
-      items.push(`<div class="sp-clue-item">${icon} ${txt}</div>`);
-    }
+
     cluesEl.innerHTML = items.length
       ? items.join('')
       : '<div class="sp-clue-empty">Ask questions to gather info before recommending...</div>';
