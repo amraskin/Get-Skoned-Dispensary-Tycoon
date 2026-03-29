@@ -895,7 +895,7 @@ class UIManager {
                 <div><strong>Customer walks up</strong> — reads their vague opening line. They won't tell you what they want yet.</div>
               </div>
               <div class="htp-step"><span class="htp-step-num">2</span>
-                <div><strong>Ask questions</strong> — "What are you looking for?", "What's your budget?", "What effects are you after?", and "How was your last visit?" (returning customers only).</div>
+                <div><strong>Ask up to 2 questions</strong> — choose wisely from "What are you looking for?", "What's your budget?", and "What effects are you after?". Ask too many and they'll walk out. Sometimes they'll volunteer info on their own.</div>
               </div>
               <div class="htp-step"><span class="htp-step-num">3</span>
                 <div><strong>Make a Recommendation</strong> — browse categories and add items to the cart with the <strong>+ Add</strong> button. Build a haul — but don't overdo it.</div>
@@ -912,22 +912,21 @@ class UIManager {
           <!-- ── CONVERSATION ── -->
           <div class="htp-section">
             <div class="htp-section-title">💬 Asking the Right Questions</div>
-            <p class="htp-text">You have up to 4 questions to ask before making your recommendation. Each one reveals key intel:</p>
+            <p class="htp-text">You can only ask <strong>2 of the 3 questions</strong> — choose wisely. Each reveals key intel:</p>
             <div class="htp-steps">
               <div class="htp-step"><span class="htp-step-num">🔍</span>
                 <div><strong>"What are you looking for?"</strong> — Reveals their category. The matching tab gets a <em>Wants!</em> badge. Skip this and you're guessing blind.</div>
               </div>
               <div class="htp-step"><span class="htp-step-num">💰</span>
-                <div><strong>"What's your budget?"</strong> — Reveals their budget. Products then show <em>In budget ✓</em> or <em>↑ over budget</em> tags so you can suggest something they'll love.</div>
+                <div><strong>"What's your budget?"</strong> — Reveals their budget. Products then show <em>In budget ✓</em> or <em>↑ over budget</em> tags.</div>
               </div>
               <div class="htp-step"><span class="htp-step-num">✨</span>
-                <div><strong>"What effects are you after?"</strong> — Their answer contains <strong>hidden clues</strong>. Listen carefully — sometimes it hints at a smarter recommendation than their original category.</div>
-              </div>
-              <div class="htp-step"><span class="htp-step-num">🔄</span>
-                <div><strong>"How was your last visit?"</strong> — <em>Returning customers only.</em> Reveals what they bought before and whether they liked it. Use this to make an even better rec.</div>
+                <div><strong>"What effects are you after?"</strong> — Their answer contains <strong>hidden clues</strong>. Sometimes it hints at a smarter recommendation than their stated category.</div>
               </div>
             </div>
-            <div class="htp-tip">💡 You don't have to ask everything — but the less you know, the higher the risk of recommending the wrong thing.</div>
+            <div class="htp-tip">⚠️ Ask more than their patience allows and they'll walk out. Watch for the warning — the 3rd button turns red when you're at the limit. Some customers are in a hurry and only tolerate one question.</div>
+            <div class="htp-tip">💬 Sometimes a customer volunteers info before you even ask — a green bubble appears. That's a freebie and doesn't count as a question.</div>
+            <div class="htp-tip">🔄 <strong>Returning customers:</strong> You already remember their category. The more they visit, the less you need to ask — a regular might only need one quick question before you know exactly what they want.</div>
           </div>
 
           <!-- ── SMART SELLS ── -->
