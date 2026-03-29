@@ -36,14 +36,11 @@ const LEADERBOARD = {
         Prefer: 'return=minimal',
       };
 
-      // Delete any existing entry for this player name saved from this browser
-      const savedName = localStorage.getItem('skoned_submitted_name');
-      if (savedName === playerName) {
-        await fetch(`${this.url}/rest/v1/leaderboard?player_name=eq.${encodeURIComponent(playerName)}`, {
-          method: 'DELETE',
-          headers,
-        });
-      }
+      // Always delete any existing entry for this player name before inserting
+      await fetch(`${this.url}/rest/v1/leaderboard?player_name=eq.${encodeURIComponent(playerName)}`, {
+        method: 'DELETE',
+        headers,
+      });
 
       const res = await fetch(`${this.url}/rest/v1/leaderboard`, {
         method: 'POST',
