@@ -69,7 +69,7 @@ class UIManager {
         <div class="menu-title">Dispensary Tycoon</div>
         <div class="menu-icons">🌿 🍬 💨 💎 🪄 🏺</div>
         <div class="menu-desc">
-          Run your own cannabis dispensary. Serve customers, master the upsell,
+          Run your own cannabis dispensary. Know your customers, make everyone happy,
           build vendor partnerships, and grow your reputation into an empire.
         </div>
         ${hasSave ? `
@@ -568,7 +568,7 @@ class UIManager {
             </div>
           </div>
           <div class="eod-stat">
-            <div class="eod-stat-label">Successful Upsells</div>
+            <div class="eod-stat-label">Everyone's Happy</div>
             <div class="eod-stat-value upsell">${stats.upsells}</div>
           </div>
           <div class="eod-stat">
@@ -867,7 +867,7 @@ class UIManager {
                 <div><strong>"What are you looking for?"</strong> — Reveals their category. The matching tab gets a <em>Wants!</em> badge. Skip this and you're guessing blind.</div>
               </div>
               <div class="htp-step"><span class="htp-step-num">💰</span>
-                <div><strong>"What's your budget?"</strong> — Reveals their budget. Products then show <em>In budget ✓</em> or <em>↑ over budget</em> tags so you can upsell smartly.</div>
+                <div><strong>"What's your budget?"</strong> — Reveals their budget. Products then show <em>In budget ✓</em> or <em>↑ over budget</em> tags so you can suggest something they'll love.</div>
               </div>
               <div class="htp-step"><span class="htp-step-num">✨</span>
                 <div><strong>"What effects are you after?"</strong> — Their answer contains <strong>hidden clues</strong>. Listen carefully — sometimes it hints at a smarter recommendation than their original category.</div>

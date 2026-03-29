@@ -461,14 +461,14 @@ class Game {
 
     this.renderer.spawnMoneyParticle(this.canvas.width/2, this.canvas.height*0.5, totalRevenue);
     if (isUpsell)
-      this.renderer.spawnSaleText(this.canvas.width/2+60, this.canvas.height*0.45, 'UPSELL! 🔥', CONFIG.colors.upsell);
+      this.renderer.spawnSaleText(this.canvas.width/2+60, this.canvas.height*0.45, 'Everyone\'s Happy! 🔥', CONFIG.colors.upsell);
     if (soldItems.length > 1)
       this.renderer.spawnSaleText(this.canvas.width/2-60, this.canvas.height*0.45, `+${soldItems.length-1} extras!`, CONFIG.colors.brandGreen);
 
     let msg = soldItems.length === 1
       ? `✅ Sold <strong>${primaryProduct.name}</strong> for $${primaryProduct.price}`
       : `✅ Sold <strong>${soldItems.length} items</strong> — $${totalRevenue} total`;
-    if (isUpsell)          msg += ` — <span style="color:#C86820">Upsell!</span>`;
+    if (isUpsell)          msg += ` — <span style="color:#C86820">Everyone's happy!</span>`;
     if (skippedNames.length) msg += ` <span style="color:#999;font-size:11px">(passed on ${skippedNames.join(', ')})</span>`;
     msg += ` | Profit: $${totalProfit.toFixed(0)}`;
 
