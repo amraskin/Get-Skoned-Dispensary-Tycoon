@@ -38,6 +38,14 @@ class Customer {
     this.declined     = false;
     this.patience     = 100; // 0–100; drops if ignored
 
+    // Conversation patience: how many questions they'll answer (1 or 2)
+    // Highrollers are always in a hurry; others ~30% chance of being impatient
+    this.questionPatience = (typeDef.type === 'highroller') ? 1 : (Math.random() < 0.3 ? 1 : 2);
+
+    // Auto-reveal: ~25% chance they volunteer one piece of info upfront
+    const _arOpts = ['category', 'budget', 'effects'];
+    this.autoReveal = Math.random() < 0.25 ? _arOpts[Math.floor(Math.random() * _arOpts.length)] : null;
+
     // Dance
     this.danceTimer   = 0.5 + Math.random() * 1.5; // fires quickly so waiting customers dance
     this.isDancing    = false;

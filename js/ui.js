@@ -92,8 +92,9 @@ class UIManager {
     if (!panel) return;
 
     this._activeCatTab = Object.keys(PRODUCTS)[0]; // start on first tab, NOT customer's category
-    this._revealed     = { category: false, budget: false, effects: false, lastVisit: false };
-    this._cart         = [];
+    this._revealed       = { category: false, budget: false, effects: false, lastVisit: false };
+    this._questionsAsked = 0;
+    this._cart           = [];
 
     const isReturning = history && history.visits > 0;
 
@@ -130,16 +131,26 @@ class UIManager {
     const visits  = history?.visits || 0;
     const catMeta = CATEGORY_META[customer.category];
 
-    // How many questions the player must ask (reduces as customer becomes a regular)
-    // visits 0 = new: 3 questions | visits 1 = returning: 2 | visits 2+ = regular: 1
-    const questionLimit = visits === 0 ? 3 : visits === 1 ? 2 : 1;
-
     // For returning customers, auto-reveal what you already know
     if (visits >= 1) this._revealed.category = true;
 
+    // Auto-reveal: some customers volunteer one piece of info upfront
+    if (customer.autoReveal && !this._revealed[customer.autoReveal]) {
+      this._revealed[customer.autoReveal] = true;
+    }
+    const autoRevealLine = customer.autoReveal ? {
+      category: `Just so you know, I'm thinking ${catMeta.label} today.`,
+      budget:   `I've only got about $${customer.budget} on me.`,
+      effects:  `I'm mainly looking for ${customer.effectHint || 'something good'}.`,
+    }[customer.autoReveal] : null;
+
+    // Which question buttons to show (still reduces for regulars)
+    const showCategory = visits === 0 && !this._revealed.category;
+    const showBudget   = visits <= 1;
+    const showEffects  = true;
+
     // Build recent visit history HTML
     const recentVisits = history?.recentVisits || (
-      // migrate old flat history format
       history?.productName ? [{ productName: history.productName, category: history.category, totalSpent: null, satisfied: history.satisfied }] : []
     );
     const historyHtml = recentVisits.length ? `
@@ -156,19 +167,22 @@ class UIManager {
       </div>
     ` : '';
 
-    const showCategory = questionLimit >= 3;
-    const showBudget   = questionLimit >= 2;
-    const showEffects  = questionLimit >= 1;
+    const convoLabel = visits === 0
+      ? (customer.questionPatience === 1 ? 'They seem in a hurry — one question, then recommend:' : 'Ask up to 2 questions, then make your recommendation:')
+      : visits === 1 ? 'You remember them — ask one more question:'
+      : 'You know this regular — just confirm one thing:';
 
     body.innerHTML = `
       ${historyHtml}
+      ${autoRevealLine ? `<div class="sp-auto-reveal">💬 <em>"${autoRevealLine}"</em></div>` : ''}
       <div class="sp-convo-section">
-        <div class="sp-convo-label">💬 ${visits === 0 ? 'Ask questions to learn what they need:' : visits === 1 ? 'You remember them — ask 2 questions:' : 'You know this regular — just confirm one thing:'}</div>
+        <div class="sp-convo-label">💬 ${convoLabel}</div>
         <div class="sp-questions" id="sp-questions">
           ${showCategory ? '<button class="sp-question-btn" id="q-category">🔍 What are you looking for today?</button>' : ''}
           ${showBudget   ? '<button class="sp-question-btn" id="q-budget">💰 What\'s your budget like?</button>' : ''}
           ${showEffects  ? '<button class="sp-question-btn" id="q-effects">✨ What kind of effects are you after?</button>' : ''}
         </div>
+        <div class="sp-patience-hint" id="sp-patience-hint"></div>
       </div>
       <div class="sp-clue-box">
         <div class="sp-clue-title">📋 What you know:</div>
@@ -182,35 +196,72 @@ class UIManager {
 
     // Seed clues with anything already known
     this._updateClues(customer, history);
+    this._updatePatienceState(customer);
 
     // Wire question buttons
     document.getElementById('q-category')?.addEventListener('click', e => {
       if (this._revealed.category) return;
+      if (this._questionsAsked >= customer.questionPatience) { this._annoyedWalkOut(customer); return; }
+      this._questionsAsked++;
       this._revealed.category = true;
       e.currentTarget.classList.add('asked');
       e.currentTarget.textContent = `🔍 Looking for: ${catMeta.icon} ${catMeta.label}`;
       this._updateClues(customer, history);
+      this._updatePatienceState(customer);
     });
 
     document.getElementById('q-budget')?.addEventListener('click', e => {
       if (this._revealed.budget) return;
+      if (this._questionsAsked >= customer.questionPatience) { this._annoyedWalkOut(customer); return; }
+      this._questionsAsked++;
       this._revealed.budget = true;
       e.currentTarget.classList.add('asked');
       e.currentTarget.textContent = `💰 Budget: around $${customer.budget}`;
       this._updateClues(customer, history);
+      this._updatePatienceState(customer);
     });
 
     document.getElementById('q-effects')?.addEventListener('click', e => {
       if (this._revealed.effects) return;
+      if (this._questionsAsked >= customer.questionPatience) { this._annoyedWalkOut(customer); return; }
+      this._questionsAsked++;
       this._revealed.effects = true;
       e.currentTarget.classList.add('asked');
       e.currentTarget.textContent = `✨ "${customer.effectHint || 'Something good...'}"`;
       this._updateClues(customer, history);
+      this._updatePatienceState(customer);
     });
 
     document.getElementById('btn-make-rec')?.addEventListener('click', () => {
       this._renderRecommendationPhase(customer, unlockedProducts);
     });
+  }
+
+  _updatePatienceState(customer) {
+    const remaining = customer.questionPatience - this._questionsAsked;
+    document.querySelectorAll('.sp-question-btn:not(.asked)').forEach(btn => {
+      btn.classList.toggle('patience-warn',   remaining === 1 && customer.questionPatience > 1);
+      btn.classList.toggle('patience-danger', remaining <= 0);
+    });
+    const hint = document.getElementById('sp-patience-hint');
+    if (!hint) return;
+    if (remaining <= 0)     hint.textContent = '⚠️ They look annoyed — any more questions and they\'ll leave!';
+    else if (remaining === 1 && customer.questionPatience > 1) hint.textContent = '⚡ Last question — then make your recommendation.';
+    else hint.textContent = '';
+  }
+
+  _annoyedWalkOut(customer) {
+    const lines = [
+      "That's way too many questions...",
+      "You're making this complicated. I'm out.",
+      "Never mind — I'll shop somewhere else.",
+      "This feels like an interview. Bye!",
+    ];
+    customer.showSpeech(lines[Math.floor(Math.random() * lines.length)], 2500);
+    document.querySelectorAll('.sp-question-btn').forEach(b => b.disabled = true);
+    const rec = document.getElementById('btn-make-rec');
+    if (rec) rec.disabled = true;
+    setTimeout(() => this.game.skipCustomer(customer), 900);
   }
 
   _updateClues(customer, history) {

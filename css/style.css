@@ -1419,6 +1419,36 @@ button, .product-card, .addon-card, .vendor-card,
   font-style: italic;
 }
 
+.sp-question-btn.patience-warn {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.sp-question-btn.patience-danger {
+  border-color: #ef4444;
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.sp-auto-reveal {
+  margin: 8px 14px 4px;
+  background: #f0fdf4;
+  border-left: 3px solid #22c55e;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #166534;
+  font-style: italic;
+}
+
+.sp-patience-hint {
+  font-size: 11px;
+  color: #92400e;
+  margin-top: 6px;
+  min-height: 16px;
+  font-style: italic;
+}
+
 .sp-clue-box {
   margin: 8px 14px 10px;
   background: #FFFDF5;
