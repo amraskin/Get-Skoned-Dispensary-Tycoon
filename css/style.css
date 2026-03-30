@@ -191,16 +191,17 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 100%;
-  margin: 10px 0 6px;
+  margin: 6px 0 4px;
 }
 
 #canvas-pixel-owner {
   image-rendering: pixelated;
   image-rendering: crisp-edges;
-  border: 3px solid #1A6B3C;
+  width: 96px;
+  height: auto;
+  border: 2px solid #1A6B3C;
   border-radius: 4px;
-  box-shadow: 0 0 12px rgba(26,107,60,0.7), 0 0 36px rgba(26,107,60,0.4);
+  box-shadow: 0 0 10px rgba(26,107,60,0.7), 0 0 28px rgba(26,107,60,0.4);
   animation: pixel-glow 2.5s ease-in-out infinite;
 }
 

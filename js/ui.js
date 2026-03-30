@@ -95,44 +95,55 @@ class UIManager {
     const cv = document.getElementById('canvas-pixel-owner');
     if (!cv) return;
     const ctx = cv.getContext('2d');
-    const px = 8;
+    const px = 7; // smaller pixel size so portrait fits the menu
 
-    const W='#CCA880', T='#7A5030', G='#0D5C30', H='#1A0E08',
-          S='#D49070', F='#222222', L='#A8C8D8', E='#D8ECFA',
-          B='#7A6858', P='#F0EDE8', D='#C8C0B8', K='#CC8855';
+    // Palette — tuned to match the photo
+    const _='#00000000'; // transparent (unused, just _ for clarity)
+    const WL='#C8A878', WD='#9A7848'; // wood light/dark slats (background)
+    const G ='#0D5C30', GD='#094020'; // Skones green sign
+    const SK='#C89070'; // skin — tan/olive
+    const SH='#A07050'; // skin shadow
+    const HR='#2A1E14'; // hair — very dark brown
+    const HG='#5A4E48'; // hair grey highlights
+    const GF='#1A1A1A'; // glasses frame
+    const GL='#A8C8D8'; // glasses lens
+    const GH='#D8ECFA'; // glasses highlight
+    const BK='#3A2E28'; // beard dark
+    const BG='#8A7A6A'; // beard grey/salt
+    const WH='#F2EFEA'; // white hoodie
+    const WS='#D8D4CC'; // hoodie shadow/fold
+    const KN='#C88850'; // knuckle/hand skin
+    const TH='#B87840'; // thumb
 
-    // 18 cols × 24 rows — owner portrait at Skones w/ thumbs up
+    // 16 cols × 20 rows
     const map = [
-      [W,T,W,T,W,G,G,G,G,G,T,W,T,W,T,W,T,W], // 0  leaf
-      [W,T,W,T,G,G,G,G,G,G,G,T,W,T,W,T,W,T], // 1  leaf
-      [W,T,W,G,G,G,G,G,G,G,G,G,T,W,T,W,T,W], // 2  leaf full
-      [W,T,W,T,G,G,G,G,G,G,G,T,W,T,W,T,W,T], // 3  leaf
-      [W,T,W,T,W,T,G,G,G,T,W,T,W,T,W,T,W,T], // 4  stem
-      [W,T,W,T,W,T,W,T,W,T,W,T,W,T,W,T,W,T], // 5  gap
-      [W,T,H,H,H,H,H,H,H,H,H,H,H,H,H,T,W,T], // 6  hair
-      [W,T,H,H,H,H,H,H,H,H,H,H,H,H,H,T,W,T], // 7  hair
-      [W,T,H,S,S,S,S,S,S,S,S,S,S,S,H,T,W,T], // 8  forehead
-      [W,T,H,S,F,E,L,F,S,F,E,L,F,S,H,T,W,T], // 9  glasses (with highlight)
-      [W,T,H,S,F,L,L,F,S,F,L,L,F,S,H,T,W,T], // 10 glasses
-      [W,T,H,S,F,F,F,F,S,F,F,F,F,S,H,T,W,T], // 11 glasses bottom
-      [W,T,H,S,S,S,S,S,S,S,S,S,S,S,H,T,W,T], // 12 face
-      [W,T,H,B,B,B,S,S,S,S,B,B,B,B,H,T,W,T], // 13 mustache/cheeks
-      [W,T,H,B,B,B,B,B,B,B,B,B,B,B,H,T,W,T], // 14 beard
-      [W,T,H,B,B,B,B,B,B,B,B,B,B,B,H,T,W,T], // 15 beard lower
-      [W,T,P,P,P,P,P,P,P,P,P,P,P,P,P,P,P,T], // 16 shoulders (wider for arm)
-      [W,T,D,P,P,P,P,P,P,P,P,P,P,P,D,P,P,T], // 17 body + arm sleeve
-      [W,T,D,P,P,P,P,P,P,P,P,P,P,D,W,P,P,T], // 18 body + arm
-      [W,T,W,D,P,P,P,P,P,P,P,P,D,W,T,P,P,T], // 19 body tapers + arm
-      [W,T,W,T,D,D,D,D,D,D,D,T,W,T,K,P,P,T], // 20 body base + thumb up
-      [W,T,W,T,W,T,W,T,W,T,W,T,W,T,K,K,K,T], // 21 fist top
-      [W,T,W,T,W,T,W,T,W,T,W,T,W,T,K,K,K,T], // 22 fist lower
-      [W,T,W,T,W,T,W,T,W,T,W,T,W,T,W,T,W,T], // 23 bottom
+      [WL,WD,WL,WD, G, G, G,GD, G, G,GD, G,WD,WL,WD,WL], // 0  Skones sign top
+      [WL,WD,WL,WD, G,GD, G, G, G,GD, G, G,WD,WL,WD,WL], // 1  Skones sign
+      [WL,WD,WL,WD,WD,WL,WD,WL,WD,WL,WD,WL,WD,WL,WD,WL], // 2  gap
+      [WL,WD,HR,HR,HR,HR,HR,HG,HG,HR,HR,HR,HR,HR,WD,WL], // 3  hair top
+      [WL,WD,HR,SK,SK,SK,SK,SK,SK,SK,SK,SK,SK,HR,WD,WL], // 4  forehead
+      [WL,WD,HR,SK,GF,GH,GL,GF,GF,GF,GL,GH,GF,SK,WD,WL], // 5  glasses top+highlight
+      [WL,WD,HR,SK,GF,GL,GL,GF,GF,GF,GL,GL,GF,SK,WD,WL], // 6  glasses lens
+      [WL,WD,HR,SK,GF,GF,GF,GF,GF,GF,GF,GF,GF,SK,WD,WL], // 7  glasses bottom
+      [WL,WD,HR,SK,SK,SK,SK,SK,SK,SK,SK,SK,SK,SK,WD,WL], // 8  cheeks/nose area
+      [WL,WD,HR,SH,BK,BG,SK,SK,SK,SK,BG,BK,SH,SH,WD,WL], // 9  mustache/upper beard
+      [WL,WD,HR,BK,BK,BG,BK,BG,BG,BK,BG,BK,BK,BK,WD,WL], // 10 beard mid
+      [WL,WD,HR,BK,BG,BK,BK,BG,BG,BK,BK,BG,BK,BK,WD,WL], // 11 beard lower
+      [WL,WD,WL,WH,WH,WH,WH,WH,WH,WH,WH,WH,WH,WL,WD,WL], // 12 collar/neck
+      [WL,WD,WH,WH,WH,WH,WH,WH,WH,WH,WH,WH,WH,WH,WD,WL], // 13 shoulders
+      [WL,WD,WH,WH,WS,WH,WH,WH,WH,WH,WH,WS,WH,WH,WD,WL], // 14 chest
+      [WL,WD,WS,WH,WH,WH,WH,WH,WH,WH,WH,WH,WH,WS,WD,KN], // 15 body + thumb side
+      [WL,WD,WS,WH,WH,WH,WH,WH,WH,WH,WH,WH,WS,WD,TH,KN], // 16 body + thumb
+      [WL,WD,WL,WS,WH,WH,WH,WH,WH,WH,WH,WS,WD,WL,KN,KN], // 17 lower body + fist
+      [WL,WD,WL,WD,WS,WS,WS,WS,WS,WS,WS,WD,WL,WD,KN,KN], // 18 base + fist
+      [WL,WD,WL,WD,WL,WD,WL,WD,WL,WD,WL,WD,WL,WD,WL,WD], // 19 bottom
     ];
 
     cv.width  = map[0].length * px;
     cv.height = map.length * px;
 
     map.forEach((row, y) => row.forEach((c, x) => {
+      if (!c || c === '#00000000') return;
       ctx.fillStyle = c;
       ctx.fillRect(x * px, y * px, px, px);
     }));
