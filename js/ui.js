@@ -68,6 +68,10 @@ class UIManager {
       <div class="menu-content">
         <div class="menu-title">Dispensary Tycoon</div>
         <div class="menu-icons">🌿 🍬 💨 💎 🪄 🏺</div>
+        <div class="pixel-owner-frame">
+          <canvas id="canvas-pixel-owner"></canvas>
+          <div class="pixel-owner-label">👍 ASkone — The Boss</div>
+        </div>
         <div class="menu-desc">
           Run your own cannabis dispensary. Know your customers, make everyone happy,
           build vendor partnerships, and grow your reputation into an empire.
@@ -84,6 +88,54 @@ class UIManager {
       </div>
     `;
     this.showOnly('menu');
+    this._drawPixelOwner();
+  }
+
+  _drawPixelOwner() {
+    const cv = document.getElementById('canvas-pixel-owner');
+    if (!cv) return;
+    const ctx = cv.getContext('2d');
+    const px = 8;
+
+    const W='#CCA880', T='#7A5030', G='#0D5C30', H='#1A0E08',
+          S='#D49070', F='#222222', L='#A8C8D8', E='#D8ECFA',
+          B='#7A6858', P='#F0EDE8', D='#C8C0B8', K='#CC8855';
+
+    // 18 cols × 24 rows — owner portrait at Skones w/ thumbs up
+    const map = [
+      [W,T,W,T,W,G,G,G,G,G,T,W,T,W,T,W,T,W], // 0  leaf
+      [W,T,W,T,G,G,G,G,G,G,G,T,W,T,W,T,W,T], // 1  leaf
+      [W,T,W,G,G,G,G,G,G,G,G,G,T,W,T,W,T,W], // 2  leaf full
+      [W,T,W,T,G,G,G,G,G,G,G,T,W,T,W,T,W,T], // 3  leaf
+      [W,T,W,T,W,T,G,G,G,T,W,T,W,T,W,T,W,T], // 4  stem
+      [W,T,W,T,W,T,W,T,W,T,W,T,W,T,W,T,W,T], // 5  gap
+      [W,T,H,H,H,H,H,H,H,H,H,H,H,H,H,T,W,T], // 6  hair
+      [W,T,H,H,H,H,H,H,H,H,H,H,H,H,H,T,W,T], // 7  hair
+      [W,T,H,S,S,S,S,S,S,S,S,S,S,S,H,T,W,T], // 8  forehead
+      [W,T,H,S,F,E,L,F,S,F,E,L,F,S,H,T,W,T], // 9  glasses (with highlight)
+      [W,T,H,S,F,L,L,F,S,F,L,L,F,S,H,T,W,T], // 10 glasses
+      [W,T,H,S,F,F,F,F,S,F,F,F,F,S,H,T,W,T], // 11 glasses bottom
+      [W,T,H,S,S,S,S,S,S,S,S,S,S,S,H,T,W,T], // 12 face
+      [W,T,H,B,B,B,S,S,S,S,B,B,B,B,H,T,W,T], // 13 mustache/cheeks
+      [W,T,H,B,B,B,B,B,B,B,B,B,B,B,H,T,W,T], // 14 beard
+      [W,T,H,B,B,B,B,B,B,B,B,B,B,B,H,T,W,T], // 15 beard lower
+      [W,T,P,P,P,P,P,P,P,P,P,P,P,P,P,P,P,T], // 16 shoulders (wider for arm)
+      [W,T,D,P,P,P,P,P,P,P,P,P,P,P,D,P,P,T], // 17 body + arm sleeve
+      [W,T,D,P,P,P,P,P,P,P,P,P,P,D,W,P,P,T], // 18 body + arm
+      [W,T,W,D,P,P,P,P,P,P,P,P,D,W,T,P,P,T], // 19 body tapers + arm
+      [W,T,W,T,D,D,D,D,D,D,D,T,W,T,K,P,P,T], // 20 body base + thumb up
+      [W,T,W,T,W,T,W,T,W,T,W,T,W,T,K,K,K,T], // 21 fist top
+      [W,T,W,T,W,T,W,T,W,T,W,T,W,T,K,K,K,T], // 22 fist lower
+      [W,T,W,T,W,T,W,T,W,T,W,T,W,T,W,T,W,T], // 23 bottom
+    ];
+
+    cv.width  = map[0].length * px;
+    cv.height = map.length * px;
+
+    map.forEach((row, y) => row.forEach((c, x) => {
+      ctx.fillStyle = c;
+      ctx.fillRect(x * px, y * px, px, px);
+    }));
   }
 
   // ─── Service panel (serving current customer) ─────────────
