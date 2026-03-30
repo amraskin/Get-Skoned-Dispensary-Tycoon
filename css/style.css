@@ -191,7 +191,8 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin: 10px auto 6px;
+  width: 100%;
+  margin: 10px 0 6px;
 }
 
 #canvas-pixel-owner {
