@@ -195,9 +195,8 @@ body {
 }
 
 #canvas-pixel-owner {
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
-  width: 96px;
+  image-rendering: auto;
+  width: 130px;
   height: auto;
   border: 2px solid #1A6B3C;
   border-radius: 4px;

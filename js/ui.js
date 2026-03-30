@@ -95,58 +95,111 @@ class UIManager {
     const cv = document.getElementById('canvas-pixel-owner');
     if (!cv) return;
     const ctx = cv.getContext('2d');
-    const px = 7; // smaller pixel size so portrait fits the menu
+    const W = 120, H = 150;
+    cv.width = W; cv.height = H;
 
-    // Palette — tuned to match the photo
-    const _='#00000000'; // transparent (unused, just _ for clarity)
-    const WL='#C8A878', WD='#9A7848'; // wood light/dark slats (background)
-    const G ='#0D5C30', GD='#094020'; // Skones green sign
-    const SK='#C89070'; // skin — tan/olive
-    const SH='#A07050'; // skin shadow
-    const HR='#2A1E14'; // hair — very dark brown
-    const HG='#5A4E48'; // hair grey highlights
-    const GF='#1A1A1A'; // glasses frame
-    const GL='#A8C8D8'; // glasses lens
-    const GH='#D8ECFA'; // glasses highlight
-    const BK='#3A2E28'; // beard dark
-    const BG='#8A7A6A'; // beard grey/salt
-    const WH='#F2EFEA'; // white hoodie
-    const WS='#D8D4CC'; // hoodie shadow/fold
-    const KN='#C88850'; // knuckle/hand skin
-    const TH='#B87840'; // thumb
+    // ── Wood slat background ──
+    for (let i = 0; i < W; i += 10) {
+      ctx.fillStyle = i % 20 === 0 ? '#B89060' : '#C8A070';
+      ctx.fillRect(i, 0, 10, H);
+    }
 
-    // 16 cols × 20 rows
-    const map = [
-      [WL,WD,WL,WD, G, G, G,GD, G, G,GD, G,WD,WL,WD,WL], // 0  Skones sign top
-      [WL,WD,WL,WD, G,GD, G, G, G,GD, G, G,WD,WL,WD,WL], // 1  Skones sign
-      [WL,WD,WL,WD,WD,WL,WD,WL,WD,WL,WD,WL,WD,WL,WD,WL], // 2  gap
-      [WL,WD,HR,HR,HR,HR,HR,HG,HG,HR,HR,HR,HR,HR,WD,WL], // 3  hair top
-      [WL,WD,HR,SK,SK,SK,SK,SK,SK,SK,SK,SK,SK,HR,WD,WL], // 4  forehead
-      [WL,WD,HR,SK,GF,GH,GL,GF,GF,GF,GL,GH,GF,SK,WD,WL], // 5  glasses top+highlight
-      [WL,WD,HR,SK,GF,GL,GL,GF,GF,GF,GL,GL,GF,SK,WD,WL], // 6  glasses lens
-      [WL,WD,HR,SK,GF,GF,GF,GF,GF,GF,GF,GF,GF,SK,WD,WL], // 7  glasses bottom
-      [WL,WD,HR,SK,SK,SK,SK,SK,SK,SK,SK,SK,SK,SK,WD,WL], // 8  cheeks/nose area
-      [WL,WD,HR,SH,BK,BG,SK,SK,SK,SK,BG,BK,SH,SH,WD,WL], // 9  mustache/upper beard
-      [WL,WD,HR,BK,BK,BG,BK,BG,BG,BK,BG,BK,BK,BK,WD,WL], // 10 beard mid
-      [WL,WD,HR,BK,BG,BK,BK,BG,BG,BK,BK,BG,BK,BK,WD,WL], // 11 beard lower
-      [WL,WD,WL,WH,WH,WH,WH,WH,WH,WH,WH,WH,WH,WL,WD,WL], // 12 collar/neck
-      [WL,WD,WH,WH,WH,WH,WH,WH,WH,WH,WH,WH,WH,WH,WD,WL], // 13 shoulders
-      [WL,WD,WH,WH,WS,WH,WH,WH,WH,WH,WH,WS,WH,WH,WD,WL], // 14 chest
-      [WL,WD,WS,WH,WH,WH,WH,WH,WH,WH,WH,WH,WH,WS,WD,KN], // 15 body + thumb side
-      [WL,WD,WS,WH,WH,WH,WH,WH,WH,WH,WH,WH,WS,WD,TH,KN], // 16 body + thumb
-      [WL,WD,WL,WS,WH,WH,WH,WH,WH,WH,WH,WS,WD,WL,KN,KN], // 17 lower body + fist
-      [WL,WD,WL,WD,WS,WS,WS,WS,WS,WS,WS,WD,WL,WD,KN,KN], // 18 base + fist
-      [WL,WD,WL,WD,WL,WD,WL,WD,WL,WD,WL,WD,WL,WD,WL,WD], // 19 bottom
-    ];
+    // ── Skones green sign text area ──
+    const sg = ctx.createLinearGradient(0,4,0,22);
+    sg.addColorStop(0,'#0D6030'); sg.addColorStop(1,'#084020');
+    ctx.fillStyle = sg;
+    ctx.beginPath(); ctx.roundRect(14,4,92,18,4); ctx.fill();
+    ctx.fillStyle = '#7AE870'; ctx.font = 'bold 11px serif';
+    ctx.textAlign = 'center'; ctx.fillText('Skones', W/2, 17);
 
-    cv.width  = map[0].length * px;
-    cv.height = map.length * px;
+    // ── Hair ──
+    ctx.fillStyle = '#201510';
+    ctx.beginPath();
+    ctx.ellipse(W/2, 44, 30, 22, 0, Math.PI, 0);
+    ctx.fill();
+    // grey highlights
+    ctx.fillStyle = '#6A5A50';
+    ctx.fillRect(34, 34, 8, 6); ctx.fillRect(75, 34, 8, 6);
 
-    map.forEach((row, y) => row.forEach((c, x) => {
-      if (!c || c === '#00000000') return;
-      ctx.fillStyle = c;
-      ctx.fillRect(x * px, y * px, px, px);
-    }));
+    // ── Face ──
+    const fg = ctx.createRadialGradient(W/2,60,5,W/2,58,28);
+    fg.addColorStop(0,'#D8A880'); fg.addColorStop(1,'#B88060');
+    ctx.fillStyle = fg;
+    ctx.beginPath();
+    ctx.ellipse(W/2, 62, 28, 30, 0, 0, Math.PI*2);
+    ctx.fill();
+
+    // ── Glasses frame ──
+    ctx.strokeStyle = '#111'; ctx.lineWidth = 2.5;
+    ctx.fillStyle = 'rgba(180,215,235,0.45)';
+    // left lens
+    ctx.beginPath(); ctx.roundRect(33,54,22,14,3); ctx.fill(); ctx.stroke();
+    // right lens
+    ctx.beginPath(); ctx.roundRect(65,54,22,14,3); ctx.fill(); ctx.stroke();
+    // bridge
+    ctx.beginPath(); ctx.moveTo(55,61); ctx.lineTo(65,61); ctx.stroke();
+    // temples
+    ctx.beginPath(); ctx.moveTo(33,61); ctx.lineTo(26,59); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(87,61); ctx.lineTo(94,59); ctx.stroke();
+    // lens highlights
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.beginPath(); ctx.ellipse(40,57,4,3,0,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(72,57,4,3,0,0,Math.PI*2); ctx.fill();
+
+    // ── Nose ──
+    ctx.fillStyle = '#A87050';
+    ctx.beginPath(); ctx.ellipse(W/2,73,5,4,0,0,Math.PI*2); ctx.fill();
+
+    // ── Slight smile ──
+    ctx.strokeStyle = '#9A6040'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(W/2,80,7,0.15,Math.PI-0.15); ctx.stroke();
+
+    // ── Salt & pepper beard / stubble ──
+    // base beard shape
+    ctx.fillStyle = '#3A2E28';
+    ctx.beginPath();
+    ctx.moveTo(24,76); ctx.bezierCurveTo(22,92,28,102,W/2,104);
+    ctx.bezierCurveTo(92,102,98,92,96,76);
+    ctx.lineTo(90,74); ctx.bezierCurveTo(80,82,40,82,30,74);
+    ctx.closePath(); ctx.fill();
+    // grey flecks
+    ctx.fillStyle = '#9A8878';
+    for (const [bx,by] of [[32,82],[42,90],[52,96],[62,96],[72,90],[82,82],[38,78],[68,78],[56,100]]) {
+      ctx.beginPath(); ctx.ellipse(bx,by,2,1.5,Math.random(),0,Math.PI*2); ctx.fill();
+    }
+    // mustache
+    ctx.fillStyle = '#2E2420';
+    ctx.beginPath(); ctx.ellipse(W/2,78,12,4,0,0,Math.PI); ctx.fill();
+
+    // ── Neck ──
+    ctx.fillStyle = '#B88060';
+    ctx.fillRect(W/2-10,100,20,12);
+
+    // ── White hoodie body ──
+    const hg = ctx.createLinearGradient(0,112,W,112);
+    hg.addColorStop(0,'#C8C4BC'); hg.addColorStop(0.3,'#F2EFEA');
+    hg.addColorStop(0.7,'#F2EFEA'); hg.addColorStop(1,'#C8C4BC');
+    ctx.fillStyle = hg;
+    ctx.beginPath();
+    ctx.moveTo(10,112); ctx.lineTo(W-10,112);
+    ctx.lineTo(W,H); ctx.lineTo(0,H); ctx.closePath(); ctx.fill();
+    // hoodie pocket line
+    ctx.strokeStyle = '#D8D4CC'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(W/2-18,138); ctx.lineTo(W/2+18,138); ctx.stroke();
+
+    // ── Thumbs up (right side) ──
+    // fist
+    ctx.fillStyle = '#C08858';
+    ctx.beginPath(); ctx.roundRect(88,120,18,22,4); ctx.fill();
+    // thumb pointing up
+    ctx.fillStyle = '#B87848';
+    ctx.beginPath(); ctx.roundRect(91,103,12,20,6); ctx.fill();
+    // knuckle lines
+    ctx.strokeStyle = '#A07040'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(90,124); ctx.lineTo(105,124); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(90,128); ctx.lineTo(105,128); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(90,132); ctx.lineTo(105,132); ctx.stroke();
+
   }
 
   // ─── Service panel (serving current customer) ─────────────
