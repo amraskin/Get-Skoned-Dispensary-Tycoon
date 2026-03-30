@@ -1056,9 +1056,9 @@ class UIManager {
             <div class="htp-section-title">🌿 The Big Picture</div>
             <p class="htp-text">
               You're running <strong>Skones</strong> — a cannabis dispensary.
-              Customers walk in every shift, but they <em>won't tell you what they want upfront</em>.
-              Your job is to <strong>ask the right questions, read between the lines,
-              build the right sale, and close it fast</strong>.
+              Every customer tells you what type of product they want when they walk in,
+              but the details — budget, vibe, what would really make them happy — are yours to uncover.
+              <strong>Ask the right questions, read between the lines, build the right sale, and close it fast.</strong>
               The more you earn, the more vendors and marketing you unlock — growing your store into an empire.
             </p>
           </div>
@@ -1068,13 +1068,13 @@ class UIManager {
             <div class="htp-section-title">🗓️ A Day in the Store</div>
             <div class="htp-steps">
               <div class="htp-step"><span class="htp-step-num">1</span>
-                <div><strong>Customer walks up</strong> — reads their vague opening line. They won't tell you what they want yet.</div>
+                <div><strong>Customer walks up</strong> — they tell you what type of product they want (flower, vapes, edibles, etc.). That part's always free.</div>
               </div>
               <div class="htp-step"><span class="htp-step-num">2</span>
-                <div><strong>Ask up to 2 questions</strong> — choose wisely from "What are you looking for?", "What's your budget?", and "What effects are you after?". Ask too many and they'll walk out. Sometimes they'll volunteer info on their own.</div>
+                <div><strong>Ask up to 3 questions</strong> — dig into their budget, what feeling they're after, and a bonus hint about what would make the sale perfect. Ask too many and they'll walk.</div>
               </div>
               <div class="htp-step"><span class="htp-step-num">3</span>
-                <div><strong>Make a Recommendation</strong> — browse categories and add items to the cart with the <strong>+ Add</strong> button. Build a haul — but don't overdo it.</div>
+                <div><strong>Make a Recommendation</strong> — browse products and add items to the cart. Build a haul — but don't overdo it.</div>
               </div>
               <div class="htp-step"><span class="htp-step-num">4</span>
                 <div><strong>Complete the Sale</strong> — hit the green button. Watch the cart mood emoji: 😊 = good, 😐 = pushing it, 😤 = they'll walk.</div>
@@ -1087,22 +1087,21 @@ class UIManager {
 
           <!-- ── CONVERSATION ── -->
           <div class="htp-section">
-            <div class="htp-section-title">💬 Asking the Right Questions</div>
-            <p class="htp-text">You can only ask <strong>2 of the 3 questions</strong> — choose wisely. Each reveals key intel:</p>
+            <div class="htp-section-title">💬 The Three Questions</div>
+            <p class="htp-text">Category is always known. Use your 3 questions to go deeper:</p>
             <div class="htp-steps">
-              <div class="htp-step"><span class="htp-step-num">🔍</span>
-                <div><strong>"What are you looking for?"</strong> — Reveals their category. The matching tab gets a <em>Wants!</em> badge. Skip this and you're guessing blind.</div>
-              </div>
               <div class="htp-step"><span class="htp-step-num">💰</span>
-                <div><strong>"What's your budget?"</strong> — Reveals their budget. Products then show <em>In budget ✓</em> or <em>↑ over budget</em> tags.</div>
+                <div><strong>"What's your budget?"</strong> — Products show <em>In budget ✓</em> or <em>↑ over budget</em> tags. Critical for not wasting their time.</div>
               </div>
               <div class="htp-step"><span class="htp-step-num">✨</span>
-                <div><strong>"What effects are you after?"</strong> — Their answer contains <strong>hidden clues</strong>. Sometimes it hints at a smarter recommendation than their stated category.</div>
+                <div><strong>"What kind of feeling are you after?"</strong> — Contains <strong>hidden clues</strong>. Sometimes their answer hints at a smarter recommendation than their stated category.</div>
+              </div>
+              <div class="htp-step"><span class="htp-step-num">🎯</span>
+                <div><strong>"Anything I should know to make this perfect?"</strong> — The bonus hint. Reveals their real intent: are they treating themselves? On a tight limit? Hosting a party? This changes everything.</div>
               </div>
             </div>
-            <div class="htp-tip">⚠️ Ask more than their patience allows and they'll walk out. Watch for the warning — the 3rd button turns red when you're at the limit. Some customers are in a hurry and only tolerate one question.</div>
-            <div class="htp-tip">💬 Sometimes a customer volunteers info before you even ask — a green bubble appears. That's a freebie and doesn't count as a question.</div>
-            <div class="htp-tip">🔄 <strong>Returning customers:</strong> You already remember their category. The more they visit, the less you need to ask — a regular might only need one quick question before you know exactly what they want.</div>
+            <div class="htp-tip">⚠️ Push past their patience and they walk out. The buttons warn you when you're close — one turns orange (last question), then red (they're done talking).</div>
+            <div class="htp-tip">🔄 <strong>Returning customers:</strong> You see what they bought last time plus your budtender note — like <em>"Spent well, open to premium again"</em>. Use it.</div>
           </div>
 
           <!-- ── SMART SELLS ── -->
@@ -1204,12 +1203,12 @@ class UIManager {
           <!-- ── TIPS ── -->
           <div class="htp-section htp-tips-section">
             <div class="htp-section-title">🔥 Pro Tips</div>
-            <div class="htp-tip">🔍 Always ask "What are you looking for?" first — recommending the wrong category sends them straight out the door.</div>
-            <div class="htp-tip">✨ The effects hint is your most powerful tool — read it carefully, it often points to a better sale than the obvious choice.</div>
+            <div class="htp-tip">🎯 The bonus "make it perfect" question is your secret weapon — it tells you if someone's splurging, on a hard limit, or hosting something. Always worth asking if you have patience left.</div>
+            <div class="htp-tip">✨ The effects hint often points to a smarter rec than their stated category — read it carefully before you click Make a Recommendation.</div>
             <div class="htp-tip">😊 Watch the cart mood emoji — the moment it hits 😐 you're at the limit. One more item and you risk losing the whole sale.</div>
             <div class="htp-tip">⚡ Speed beats perfection — a quick solid sale beats a slow perfect one when reviews are on the line.</div>
             <div class="htp-tip">🏺 BSkone Bongs have the highest margins. The Grand Artist ($320) returns nearly $200 profit — worth unlocking BSkone Glass Works early.</div>
-            <div class="htp-tip">🔄 Returning customers are gold — ask about their last visit and nail the follow-up. They're already fans.</div>
+            <div class="htp-tip">🔄 Returning customers are gold — check your budtender note before you start asking questions. You might already know exactly what they need.</div>
           </div>
 
         </div><!-- /htp-body -->
