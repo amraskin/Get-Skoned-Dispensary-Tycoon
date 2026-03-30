@@ -255,10 +255,11 @@ body {
 .btn-brand:hover:not(:disabled) { background: linear-gradient(135deg, #3A7050, #5A9A68); }
 
 .btn-secondary {
-  background: #E8E4E0;
-  color: #444;
+  background: rgba(255,255,255,0.12);
+  color: #C8F0C8;
+  border: 1.5px solid rgba(122,255,122,0.45);
 }
-.btn-secondary:hover { background: #D8D4D0; }
+.btn-secondary:hover { background: rgba(255,255,255,0.22); border-color: rgba(122,255,122,0.7); }
 
 .btn-disabled {
   background: #CCCCCC;
