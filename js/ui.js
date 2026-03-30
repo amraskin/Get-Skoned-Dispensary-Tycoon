@@ -95,7 +95,7 @@ class UIManager {
     const cv = document.getElementById('canvas-pixel-owner');
     if (!cv) return;
     const ctx = cv.getContext('2d');
-    const W = 120, H = 150;
+    const W = 90, H = 110;
     cv.width = W; cv.height = H;
 
     // ── Wood slat background ──
