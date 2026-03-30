@@ -129,12 +129,14 @@ body {
   align-items: center;
   justify-content: center;
   z-index: 100;
-  gap: 24px;
+  gap: 10px;
+  padding: 12px 0;
+  overflow: hidden;
 }
 
 /* Real logo image — neon green pulsing glow */
 .menu-logo {
-  width: 260px;
+  width: 200px;
   height: auto;
   flex-shrink: 0;
   animation: logoNeonPulse 3s ease-in-out infinite;
@@ -191,12 +193,12 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin: 6px 0 4px;
+  margin: 2px 0 2px;
 }
 
 #canvas-pixel-owner {
   image-rendering: auto;
-  width: 130px;
+  width: 100px;
   height: auto;
   border: 2px solid #1A6B3C;
   border-radius: 4px;
@@ -220,11 +222,11 @@ body {
 }
 
 .menu-desc {
-  font-size: 14px;
+  font-size: 13px;
   color: rgba(255,255,255,0.4);
   text-align: center;
   max-width: 420px;
-  line-height: 1.6;
+  line-height: 1.4;
 }
 
 /* ─── Buttons ─────────────────────────────────────────────── */
