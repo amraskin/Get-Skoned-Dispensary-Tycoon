@@ -94,112 +94,180 @@ class UIManager {
   _drawPixelOwner() {
     const cv = document.getElementById('canvas-pixel-owner');
     if (!cv) return;
-    const ctx = cv.getContext('2d');
-    const W = 90, H = 110;
+    if (cv._anim) { cancelAnimationFrame(cv._anim); cv._anim = null; }
+
+    const W = 120, H = 148, FLOOR = 112;
     cv.width = W; cv.height = H;
+    const BG = '#060E06', FG = '#7AFF7A', DIM = '#1A4A1A', GOLD = '#FFD700';
+    const t0 = Date.now();
 
-    // ── Wood slat background ──
-    for (let i = 0; i < W; i += 10) {
-      ctx.fillStyle = i % 20 === 0 ? '#B89060' : '#C8A070';
-      ctx.fillRect(i, 0, 10, H);
+    // ── Helpers ──
+    function L(c,x1,y1,x2,y2,w=3){c.lineWidth=w;c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();c.lineWidth=3;}
+    function H2(c,x,y,r=11){c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fillStyle=BG;c.fill();c.strokeStyle=FG;c.lineWidth=3;c.stroke();}
+    function dot(c,x,y,r=3,col=FG){c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fillStyle=col;c.fill();}
+    function setup(c){c.strokeStyle=FG;c.lineWidth=3;c.lineCap='round';c.lineJoin='round';}
+
+    const cx = W/2;
+
+    // ── Dance moves ──
+    function drawMoonwalk(c,t) {
+      setup(c);
+      const x = cx + Math.sin(t*Math.PI*2)*10;
+      const legT = (t*4)%1;
+      H2(c,x,32); L(c,x,43,x,74); // head + body
+      const sw = Math.sin(t*Math.PI*4)*16;
+      L(c,x,54,x-18+sw,67); L(c,x,54,x+18-sw,67); // arms swing
+      if(legT<0.5){
+        const s=legT*2;
+        L(c,x,74,x-13,93); L(c,x-13,93,x-6+s*16,FLOOR); // L slides
+        L(c,x,74,x+13,FLOOR);                              // R planted
+      } else {
+        const s=(legT-0.5)*2;
+        L(c,x,74,x+13,93); L(c,x+13,93,x+6-s*16,FLOOR); // R slides
+        L(c,x,74,x-13,FLOOR);                              // L planted
+      }
     }
 
-    // ── Skones green sign text area ──
-    const sg = ctx.createLinearGradient(0,4,0,22);
-    sg.addColorStop(0,'#0D6030'); sg.addColorStop(1,'#084020');
-    ctx.fillStyle = sg;
-    ctx.beginPath(); ctx.roundRect(14,4,92,18,4); ctx.fill();
-    ctx.fillStyle = '#7AE870'; ctx.font = 'bold 11px serif';
-    ctx.textAlign = 'center'; ctx.fillText('Skones', W/2, 17);
-
-    // ── Hair ──
-    ctx.fillStyle = '#201510';
-    ctx.beginPath();
-    ctx.ellipse(W/2, 44, 30, 22, 0, Math.PI, 0);
-    ctx.fill();
-    // grey highlights
-    ctx.fillStyle = '#6A5A50';
-    ctx.fillRect(34, 34, 8, 6); ctx.fillRect(75, 34, 8, 6);
-
-    // ── Face ──
-    const fg = ctx.createRadialGradient(W/2,60,5,W/2,58,28);
-    fg.addColorStop(0,'#D8A880'); fg.addColorStop(1,'#B88060');
-    ctx.fillStyle = fg;
-    ctx.beginPath();
-    ctx.ellipse(W/2, 62, 28, 30, 0, 0, Math.PI*2);
-    ctx.fill();
-
-    // ── Glasses frame ──
-    ctx.strokeStyle = '#111'; ctx.lineWidth = 2.5;
-    ctx.fillStyle = 'rgba(180,215,235,0.45)';
-    // left lens
-    ctx.beginPath(); ctx.roundRect(33,54,22,14,3); ctx.fill(); ctx.stroke();
-    // right lens
-    ctx.beginPath(); ctx.roundRect(65,54,22,14,3); ctx.fill(); ctx.stroke();
-    // bridge
-    ctx.beginPath(); ctx.moveTo(55,61); ctx.lineTo(65,61); ctx.stroke();
-    // temples
-    ctx.beginPath(); ctx.moveTo(33,61); ctx.lineTo(26,59); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(87,61); ctx.lineTo(94,59); ctx.stroke();
-    // lens highlights
-    ctx.fillStyle = 'rgba(255,255,255,0.35)';
-    ctx.beginPath(); ctx.ellipse(40,57,4,3,0,0,Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(72,57,4,3,0,0,Math.PI*2); ctx.fill();
-
-    // ── Nose ──
-    ctx.fillStyle = '#A87050';
-    ctx.beginPath(); ctx.ellipse(W/2,73,5,4,0,0,Math.PI*2); ctx.fill();
-
-    // ── Slight smile ──
-    ctx.strokeStyle = '#9A6040'; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.arc(W/2,80,7,0.15,Math.PI-0.15); ctx.stroke();
-
-    // ── Salt & pepper beard / stubble ──
-    // base beard shape
-    ctx.fillStyle = '#3A2E28';
-    ctx.beginPath();
-    ctx.moveTo(24,76); ctx.bezierCurveTo(22,92,28,102,W/2,104);
-    ctx.bezierCurveTo(92,102,98,92,96,76);
-    ctx.lineTo(90,74); ctx.bezierCurveTo(80,82,40,82,30,74);
-    ctx.closePath(); ctx.fill();
-    // grey flecks
-    ctx.fillStyle = '#9A8878';
-    for (const [bx,by] of [[32,82],[42,90],[52,96],[62,96],[72,90],[82,82],[38,78],[68,78],[56,100]]) {
-      ctx.beginPath(); ctx.ellipse(bx,by,2,1.5,Math.random(),0,Math.PI*2); ctx.fill();
+    function drawHeadSpin(c,t) {
+      setup(c);
+      const hx=cx, hy=FLOOR-11, angle=t*Math.PI*6;
+      for(let i=6;i>0;i--){
+        const a=angle-i*0.25; c.globalAlpha=(7-i)/15;
+        c.beginPath();c.moveTo(hx,hy);
+        c.lineTo(hx+Math.cos(a)*36,hy-Math.sin(a)*28);
+        c.lineWidth=2;c.strokeStyle=FG;c.stroke();
+      }
+      c.globalAlpha=1;
+      H2(c,hx,hy);
+      const bx=hx+Math.cos(angle)*36, by=hy-Math.sin(angle)*28;
+      L(c,hx,hy,bx,by);
+      L(c,bx,by,bx+Math.cos(angle+0.7)*26,by-Math.sin(angle+0.7)*20);
+      L(c,bx,by,bx+Math.cos(angle-0.7)*26,by-Math.sin(angle-0.7)*20);
+      L(c,hx,hy,hx+Math.cos(angle+Math.PI)*20,hy-Math.sin(angle+Math.PI)*14,2);
+      for(let i=0;i<8;i++) dot(c,hx+Math.cos(angle*1.3+i*Math.PI/4)*14,hy+Math.sin(angle*1.3+i*Math.PI/4)*11,1.5,GOLD);
     }
-    // mustache
-    ctx.fillStyle = '#2E2420';
-    ctx.beginPath(); ctx.ellipse(W/2,78,12,4,0,0,Math.PI); ctx.fill();
 
-    // ── Neck ──
-    ctx.fillStyle = '#B88060';
-    ctx.fillRect(W/2-10,100,20,12);
+    function drawWindmill(c,t) {
+      setup(c);
+      const angle=t*Math.PI*4, px=cx-5, py=78;
+      L(c,px,py,px-22,FLOOR,3); dot(c,px-22,FLOOR,5);
+      const hx=px+Math.cos(angle)*32, hy=py+Math.sin(angle)*26;
+      H2(c,hx,hy,10); L(c,px,py,hx,hy);
+      L(c,px,py,px+Math.cos(angle+Math.PI+0.7)*42,py+Math.sin(angle+Math.PI+0.7)*36);
+      L(c,px,py,px+Math.cos(angle+Math.PI-0.7)*42,py+Math.sin(angle+Math.PI-0.7)*36);
+      L(c,px,py,px+Math.cos(angle+2)*22,py+Math.sin(angle+2)*18,2);
+    }
 
-    // ── White hoodie body ──
-    const hg = ctx.createLinearGradient(0,112,W,112);
-    hg.addColorStop(0,'#C8C4BC'); hg.addColorStop(0.3,'#F2EFEA');
-    hg.addColorStop(0.7,'#F2EFEA'); hg.addColorStop(1,'#C8C4BC');
-    ctx.fillStyle = hg;
-    ctx.beginPath();
-    ctx.moveTo(10,112); ctx.lineTo(W-10,112);
-    ctx.lineTo(W,H); ctx.lineTo(0,H); ctx.closePath(); ctx.fill();
-    // hoodie pocket line
-    ctx.strokeStyle = '#D8D4CC'; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(W/2-18,138); ctx.lineTo(W/2+18,138); ctx.stroke();
+    function drawRobot(c,t) {
+      setup(c);
+      const poses=[
+        {ht:0, la:[-22,-18],ra:[22,-18],ll:-12,rl:12},
+        {ht:8, la:[-22,0],  ra:[12,-22],ll:-6, rl:14},
+        {ht:-8,la:[-12,-22],ra:[22,0],  ll:-14,rl:6},
+        {ht:0, la:[-18,0],  ra:[18,0],  ll:-10,rl:10},
+      ];
+      const pi=Math.floor(t*poses.length)%poses.length, p=poses[pi];
+      const snap=Math.min(1,((t*poses.length)%1)/0.2);
+      H2(c,cx+p.ht*snap,32);
+      L(c,cx,43,cx,74);
+      const ey=58;
+      L(c,cx,54,cx+p.la[0],ey); L(c,cx+p.la[0],ey,cx+p.la[0],ey+Math.abs(p.la[1]));
+      L(c,cx,54,cx+p.ra[0],ey); L(c,cx+p.ra[0],ey,cx+p.ra[0],ey+Math.abs(p.ra[1]));
+      L(c,cx,74,cx+p.ll,94); L(c,cx+p.ll,94,cx+p.ll,FLOOR);
+      L(c,cx,74,cx+p.rl,94); L(c,cx+p.rl,94,cx+p.rl,FLOOR);
+    }
 
-    // ── Thumbs up (right side) ──
-    // fist
-    ctx.fillStyle = '#C08858';
-    ctx.beginPath(); ctx.roundRect(88,120,18,22,4); ctx.fill();
-    // thumb pointing up
-    ctx.fillStyle = '#B87848';
-    ctx.beginPath(); ctx.roundRect(91,103,12,20,6); ctx.fill();
-    // knuckle lines
-    ctx.strokeStyle = '#A07040'; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(90,124); ctx.lineTo(105,124); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(90,128); ctx.lineTo(105,128); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(90,132); ctx.lineTo(105,132); ctx.stroke();
+    function drawWorm(c,t) {
+      setup(c);
+      const N=10, x0=16, x1=W-16, pts=[];
+      for(let i=0;i<=N;i++){
+        const prog=i/N, x=x0+prog*(x1-x0);
+        const y=FLOOR-8-Math.max(0,Math.sin((prog-t*2)*Math.PI*2))*28;
+        pts.push([x,y]);
+      }
+      c.beginPath(); c.moveTo(pts[0][0],pts[0][1]);
+      for(let i=1;i<=N;i++) c.lineTo(pts[i][0],pts[i][1]);
+      c.stroke();
+      H2(c,pts[0][0],pts[0][1]-8,9);
+      dot(c,pts[N][0]-4,pts[N][1],3); dot(c,pts[N][0]+4,pts[N][1],3);
+      const pk=pts.reduce((b,p,i)=>p[1]<pts[b][1]?i:b,0);
+      if(pts[pk][1]<FLOOR-18){ L(c,pts[pk][0],pts[pk][1],pts[pk][0],pts[pk][1]-14,2); L(c,pts[pk][0],pts[pk][1],pts[pk][0]-8,pts[pk][1]-8,2); }
+    }
 
+    function drawDisco(c,t) {
+      setup(c);
+      const bounce=Math.abs(Math.sin(t*Math.PI*6))*7, by=-bounce;
+      // disco ball
+      c.strokeStyle=GOLD; c.lineWidth=0.8;
+      c.beginPath(); c.arc(cx,10,8,0,Math.PI*2); c.stroke();
+      for(let i=0;i<6;i++){const a=t*Math.PI*4+i*Math.PI/3; L(c,cx+Math.cos(a)*8,10+Math.sin(a)*8,cx+Math.cos(a)*14,10+Math.sin(a)*14,0.5);}
+      c.strokeStyle=FG; c.lineWidth=3;
+      const hx=cx+Math.sin(t*Math.PI*4)*6;
+      H2(c,hx,32+by); L(c,hx,43+by,hx,72+by);
+      const hipX=hx+Math.sin(t*Math.PI*4)*7;
+      L(c,hipX,72+by,hipX-10,FLOOR); L(c,hipX,72+by,hipX+10,FLOOR);
+      const up=Math.sin(t*Math.PI*4)>0;
+      if(up){ L(c,hx,52+by,hx-24,32+by); L(c,hx,52+by,hx+18,66+by); dot(c,hx-27,30+by,3,GOLD); }
+      else  { L(c,hx,52+by,hx-18,66+by); L(c,hx,52+by,hx+24,32+by); dot(c,hx+27,30+by,3,GOLD); }
+      for(let i=0;i<6;i++) dot(c,cx+Math.cos(t*Math.PI*3+i*Math.PI/3)*32,58+Math.sin(t*Math.PI*2+i)*18,1.5,GOLD);
+    }
+
+    function drawBreakdance(c,t) {
+      setup(c);
+      // Freeze pose: figure balanced on one hand, body horizontal, legs in air
+      const wobble = Math.sin(t*Math.PI*6)*0.08;
+      c.save(); c.translate(cx, 80); c.rotate(wobble);
+      // planted hand
+      L(c,0,0,-28,20,3); dot(c,-28,20,5);
+      // body horizontal
+      L(c,0,0,32,0);
+      // head
+      H2(c,44,-4,10);
+      // legs up in air (spread in a V)
+      L(c,0,0,-8,-32); L(c,-8,-32,-20,-48);  // L leg
+      L(c,0,0,8,-28);  L(c,8,-28,18,-44);    // R leg
+      // free arm up
+      L(c,10,-8,22,-26,2);
+      c.restore();
+      // sparks at hand plant
+      for(let i=0;i<5;i++) dot(c,cx-28+Math.cos(t*Math.PI*4+i)*6,100+Math.sin(t*Math.PI*4+i)*4,1.5,GOLD);
+    }
+
+    const MOVES = [
+      { name:'🕺 Moonwalk',   dur:3000, fn:drawMoonwalk },
+      { name:'🌀 Head Spin',  dur:2500, fn:drawHeadSpin },
+      { name:'💥 Windmill',   dur:2800, fn:drawWindmill },
+      { name:'🤖 Robot',      dur:2400, fn:drawRobot },
+      { name:'🐛 The Worm',   dur:3000, fn:drawWorm },
+      { name:'🪩 Disco!',     dur:2200, fn:drawDisco },
+      { name:'🔥 Freeze!',    dur:2600, fn:drawBreakdance },
+    ];
+    const TOTAL = MOVES.reduce((s,m)=>s+m.dur,0);
+
+    function loop() {
+      const elapsed = (Date.now()-t0) % TOTAL;
+      let accum=0, move=MOVES[0], mt=0;
+      for(const m of MOVES){ if(elapsed<accum+m.dur){move=m;mt=(elapsed-accum)/m.dur;break;} accum+=m.dur; }
+
+      const c = cv.getContext('2d');
+      c.clearRect(0,0,W,H);
+      c.fillStyle=BG; c.fillRect(0,0,W,H);
+
+      // dance floor lines
+      c.strokeStyle=DIM; c.lineWidth=1; c.setLineDash([3,5]);
+      c.beginPath(); c.moveTo(5,FLOOR); c.lineTo(W-5,FLOOR); c.stroke();
+      c.setLineDash([]);
+
+      c.globalAlpha=1;
+      move.fn(c, mt);
+
+      // move label
+      c.fillStyle=FG; c.font='bold 8px monospace'; c.textAlign='center';
+      c.fillText(move.name, W/2, H-4);
+
+      cv._anim = requestAnimationFrame(loop);
+    }
+    loop();
   }
 
   // ─── Service panel (serving current customer) ─────────────
