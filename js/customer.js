@@ -38,13 +38,12 @@ class Customer {
     this.declined     = false;
     this.patience     = 100; // 0–100; drops if ignored
 
-    // Conversation patience: how many questions they'll answer (1 or 2)
-    // Highrollers are always in a hurry; others ~30% chance of being impatient
-    this.questionPatience = (typeDef.type === 'highroller') ? 1 : (Math.random() < 0.3 ? 1 : 2);
+    // Conversation patience: how many questions they'll answer (2 or 3)
+    // Highrollers are always in a hurry; everyone else will answer up to 3
+    this.questionPatience = (typeDef.type === 'highroller') ? 2 : 3;
 
-    // Auto-reveal: ~25% chance they volunteer one piece of info upfront
-    const _arOpts = ['category', 'budget', 'effects'];
-    this.autoReveal = Math.random() < 0.25 ? _arOpts[Math.floor(Math.random() * _arOpts.length)] : null;
+    // Misc hint: bonus clue revealed by 3rd question
+    this.miscHint = this.pickMiscHint(typeDef.type);
 
     // Dance
     this.danceTimer   = 0.5 + Math.random() * 1.5; // fires quickly so waiting customers dance
@@ -118,6 +117,11 @@ class Customer {
   pickEffectHint(cat) {
     const hints = CATEGORY_EFFECT_HINTS[cat] || [];
     return hints[Math.floor(Math.random() * hints.length)] || 'Just looking for something good.';
+  }
+
+  pickMiscHint(type) {
+    const hints = MISC_HINTS[type] || MISC_HINTS.curious;
+    return hints[Math.floor(Math.random() * hints.length)];
   }
 
   pickSkinTone() {

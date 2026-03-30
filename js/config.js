@@ -501,3 +501,34 @@ const CATEGORY_EFFECT_HINTS = {
     "A friend has one of your bongs. I've been thinking about getting one.",           // standard
   ],
 };
+
+// ============================================================
+//  MISC HINTS — bonus clue revealed by 3rd question
+//  Hints reveal spending intent / situation / expectations
+// ============================================================
+const MISC_HINTS = {
+  budget: [
+    "I've got a hard limit today — best value is all I'm after.",
+    "Don't bother with add-ons, I just want the main thing.",
+    "I'm a simple person. Reliable and affordable wins every time.",
+    "I come in pretty often, so I can't splurge every time.",
+  ],
+  curious: [
+    "It's a special occasion — I might be willing to treat myself.",
+    "First time really exploring this stuff. Don't want to overdo it.",
+    "I want to share it with a friend later, so a little extra is fine.",
+    "What's been popular lately? I like trying what's trending.",
+  ],
+  enthusiast: [
+    "Quality over everything — I'll happily pay more for the right product.",
+    "I've been doing this a while. Skip the beginner stuff.",
+    "I've heard great things about your premium selection.",
+    "If it's the best you carry, I want it — even if it costs more.",
+  ],
+  highroller: [
+    "Save us both time — go straight to the top shelf.",
+    "Price is not a concern. What's the absolute best you've got?",
+    "I'm hosting something this weekend. I want to impress people.",
+    "Do you have anything exclusive that's not in the regular rotation?",
+  ],
+};

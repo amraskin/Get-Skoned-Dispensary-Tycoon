@@ -276,7 +276,7 @@ class UIManager {
     if (!panel) return;
 
     this._activeCatTab = Object.keys(PRODUCTS)[0]; // start on first tab, NOT customer's category
-    this._revealed       = { category: false, budget: false, effects: false, lastVisit: false };
+    this._revealed       = { category: true, budget: false, effects: false, misc: false };
     this._questionsAsked = 0;
     this._cart           = [];
 
@@ -315,56 +315,48 @@ class UIManager {
     const visits  = history?.visits || 0;
     const catMeta = CATEGORY_META[customer.category];
 
-    // For returning customers, auto-reveal what you already know
-    if (visits >= 1) this._revealed.category = true;
-
-    // Auto-reveal: some customers volunteer one piece of info upfront
-    if (customer.autoReveal && !this._revealed[customer.autoReveal]) {
-      this._revealed[customer.autoReveal] = true;
-    }
-    const autoRevealLine = customer.autoReveal ? {
-      category: `Just so you know, I'm thinking ${catMeta.label} today.`,
-      budget:   `I've only got about $${customer.budget} on me.`,
-      effects:  `I'm mainly looking for ${customer.effectHint || 'something good'}.`,
-    }[customer.autoReveal] : null;
-
-    // Which question buttons to show (still reduces for regulars)
-    const showCategory = visits === 0 && !this._revealed.category;
-    const showBudget   = visits <= 1;
-    const showEffects  = true;
-
-    // Build recent visit history HTML
+    // Build returning customer history + budtender note
     const recentVisits = history?.recentVisits || (
       history?.productName ? [{ productName: history.productName, category: history.category, totalSpent: null, satisfied: history.satisfied }] : []
     );
-    const historyHtml = recentVisits.length ? `
-      <div class="sp-history-box">
-        <div class="sp-convo-label">📖 Purchase history:</div>
-        ${recentVisits.map((v, i) => `
-          <div class="sp-history-row">
-            <span class="sp-history-visit">${i === 0 ? 'Last visit' : '2 visits ago'}</span>
-            <span class="sp-history-product">${CATEGORY_META[v.category]?.icon || ''} ${v.productName}</span>
-            ${v.totalSpent != null ? `<span class="sp-history-spent">$${v.totalSpent}</span>` : ''}
-            <span class="sp-history-outcome">${v.satisfied ? '✅' : '❌'}</span>
-          </div>
-        `).join('')}
-      </div>
-    ` : '';
+    let historyHtml = '';
+    if (recentVisits.length) {
+      const lastV = recentVisits[0];
+      const lastCatMeta = CATEGORY_META[lastV.category] || {};
+      const budNote = lastV.satisfied
+        ? (lastV.totalSpent && lastV.totalSpent > 40
+            ? `Spent well last time — open to premium again.`
+            : `Happy with their purchase. Could be open to stepping up.`)
+        : `Seemed off last visit — try something a bit different.`;
+      historyHtml = `
+        <div class="sp-history-box">
+          <div class="sp-convo-label">📖 You remember them:</div>
+          ${recentVisits.map((v, i) => `
+            <div class="sp-history-row">
+              <span class="sp-history-visit">${i === 0 ? 'Last visit' : '2 visits ago'}</span>
+              <span class="sp-history-product">${CATEGORY_META[v.category]?.icon || ''} ${v.productName}</span>
+              ${v.totalSpent != null ? `<span class="sp-history-spent">$${v.totalSpent}</span>` : ''}
+              <span class="sp-history-outcome">${v.satisfied ? '✅' : '❌'}</span>
+            </div>
+          `).join('')}
+          <div class="sp-budtender-note">💭 Your note: ${budNote}</div>
+        </div>
+      `;
+    }
 
+    const patience = customer.questionPatience;
     const convoLabel = visits === 0
-      ? (customer.questionPatience === 1 ? 'They seem in a hurry — one question, then recommend:' : 'Ask up to 2 questions, then make your recommendation:')
-      : visits === 1 ? 'You remember them — ask one more question:'
-      : 'You know this regular — just confirm one thing:';
+      ? (patience <= 2 ? `They seem in a hurry — max ${patience} questions, then recommend:` : `They want ${catMeta.icon} ${catMeta.label}. Ask up to 3 questions:`)
+      : `They're back! They want ${catMeta.icon} ${catMeta.label} again. Dig deeper:`;
 
     body.innerHTML = `
       ${historyHtml}
-      ${autoRevealLine ? `<div class="sp-auto-reveal">💬 <em>"${autoRevealLine}"</em></div>` : ''}
       <div class="sp-convo-section">
         <div class="sp-convo-label">💬 ${convoLabel}</div>
         <div class="sp-questions" id="sp-questions">
-          ${showCategory ? '<button class="sp-question-btn" id="q-category">🔍 What are you looking for today?</button>' : ''}
-          ${showBudget   ? '<button class="sp-question-btn" id="q-budget">💰 What\'s your budget like?</button>' : ''}
-          ${showEffects  ? '<button class="sp-question-btn" id="q-effects">✨ What kind of effects are you after?</button>' : ''}
+          <button class="sp-question-btn" id="q-budget">💰 What's your budget like?</button>
+          <button class="sp-question-btn" id="q-effects">✨ What kind of feeling are you after?</button>
+          <button class="sp-question-btn" id="q-misc">🎯 Anything else I should know to make this perfect?</button>
         </div>
         <div class="sp-patience-hint" id="sp-patience-hint"></div>
       </div>
@@ -378,21 +370,9 @@ class UIManager {
       <button class="btn btn-brand sp-sell-btn" id="btn-make-rec">🛍️ Make a Recommendation →</button>
     `;
 
-    // Seed clues with anything already known
+    // Seed clues with what's already known (category always known)
     this._updateClues(customer, history);
     this._updatePatienceState(customer);
-
-    // Wire question buttons
-    document.getElementById('q-category')?.addEventListener('click', e => {
-      if (this._revealed.category) return;
-      if (this._questionsAsked >= customer.questionPatience) { this._annoyedWalkOut(customer); return; }
-      this._questionsAsked++;
-      this._revealed.category = true;
-      e.currentTarget.classList.add('asked');
-      e.currentTarget.textContent = `🔍 Looking for: ${catMeta.icon} ${catMeta.label}`;
-      this._updateClues(customer, history);
-      this._updatePatienceState(customer);
-    });
 
     document.getElementById('q-budget')?.addEventListener('click', e => {
       if (this._revealed.budget) return;
@@ -416,6 +396,17 @@ class UIManager {
       this._updatePatienceState(customer);
     });
 
+    document.getElementById('q-misc')?.addEventListener('click', e => {
+      if (this._revealed.misc) return;
+      if (this._questionsAsked >= customer.questionPatience) { this._annoyedWalkOut(customer); return; }
+      this._questionsAsked++;
+      this._revealed.misc = true;
+      e.currentTarget.classList.add('asked');
+      e.currentTarget.textContent = `🎯 "${customer.miscHint}"`;
+      this._updateClues(customer, history);
+      this._updatePatienceState(customer);
+    });
+
     document.getElementById('btn-make-rec')?.addEventListener('click', () => {
       this._renderRecommendationPhase(customer, unlockedProducts);
     });
@@ -430,7 +421,7 @@ class UIManager {
     const hint = document.getElementById('sp-patience-hint');
     if (!hint) return;
     if (remaining <= 0)     hint.textContent = '⚠️ They look annoyed — any more questions and they\'ll leave!';
-    else if (remaining === 1 && customer.questionPatience > 1) hint.textContent = '⚡ Last question — then make your recommendation.';
+    else if (remaining === 1) hint.textContent = '⚡ One question left — then make your recommendation.';
     else hint.textContent = '';
   }
 
@@ -455,16 +446,16 @@ class UIManager {
     const visits  = history?.visits || 0;
     const items   = [];
 
-    if (this._revealed.category)
-      items.push(`<div class="sp-clue-item">🎯 Wants: <strong>${catMeta.icon} ${catMeta.label}</strong>${visits >= 1 ? ' <span class="sp-clue-source">(you remember)</span>' : ''}</div>`);
+    // Category is always known
+    items.push(`<div class="sp-clue-item">🎯 Wants: <strong>${catMeta.icon} ${catMeta.label}</strong>${visits >= 1 ? ' <span class="sp-clue-source">(returning)</span>' : ''}</div>`);
     if (this._revealed.budget)
       items.push(`<div class="sp-clue-item">💰 Budget: <strong>~$${customer.budget}</strong></div>`);
     if (this._revealed.effects)
       items.push(`<div class="sp-clue-item">✨ <em>"${customer.effectHint || 'Something good'}"</em></div>`);
+    if (this._revealed.misc)
+      items.push(`<div class="sp-clue-item">🎯 <em>"${customer.miscHint}"</em></div>`);
 
-    cluesEl.innerHTML = items.length
-      ? items.join('')
-      : '<div class="sp-clue-empty">Ask questions to gather info before recommending...</div>';
+    cluesEl.innerHTML = items.join('');
   }
 
   // ─── Recommendation phase ──────────────────────────────────
@@ -480,9 +471,10 @@ class UIManager {
 
     // Build compact "what you know" summary for the rec phase
     const knownBits = [];
-    if (this._revealed.category) knownBits.push(`${catMeta.icon} ${catMeta.label}`);
+    knownBits.push(`${catMeta.icon} ${catMeta.label}`); // always known
     if (this._revealed.budget)   knownBits.push(`~$${customer.budget}`);
     if (this._revealed.effects)  knownBits.push(`"${customer.effectHint || 'Something good'}"`);
+    if (this._revealed.misc)     knownBits.push(`"${customer.miscHint}"`);
     const knownBar = knownBits.length ? `
       <div class="sp-rec-knowbar">
         <span class="sp-rec-knowbar-label">You know:</span>
