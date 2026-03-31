@@ -65,7 +65,7 @@ class Customer {
     this.x        = -50;
     this.targetX  = 200 + Math.random() * 120;
     this.y        = Math.round(canvasHeight * 0.68) - 60;
-    this.speed    = 1.8 + Math.random() * 0.6;
+    this.speed    = 3.2 + Math.random() * 1.0;
     this.facing   = 1; // 1=right, -1=left
     this.walkCycle = 0;
     this.bobOffset = 0;
