@@ -16,6 +16,14 @@
   <meta name="twitter:description" content="Run your own cannabis dispensary. Know your customers, make everyone happy, build vendor partnerships, and grow your reputation into an empire." />
   <meta name="twitter:image"      content="https://amraskin.github.io/Get-Skoned-Dispensary-Tycoon/img/social-preview.png" />
 
+  <!-- ── PWA ── -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#1A6B3C" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Get Skoned" />
+  <link rel="apple-touch-icon" href="img/icon-180.png" />
+
   <link rel="stylesheet" href="css/style.css?v=10" />
 </head>
 <body>
@@ -141,6 +149,13 @@
     window.addEventListener('resize',           checkOrientation);
     window.addEventListener('orientationchange', checkOrientation);
     window.addEventListener('DOMContentLoaded',  checkOrientation);
+
+    // ── Service Worker (PWA offline support) ──────────────────
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js');
+      });
+    }
   </script>
 
 </body>
