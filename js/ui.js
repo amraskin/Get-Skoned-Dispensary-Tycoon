@@ -1219,20 +1219,16 @@ class UIManager {
             <div class="htp-tip">💡 If the effects hint doesn't match the category you're offering, offering the wrong thing will still make them leave.</div>
           </div>
 
-          <!-- ── CART & OVERSELL ── -->
+          <!-- ── CUSTOMER TYPES ── -->
           <div class="htp-section">
-            <div class="htp-section-title">🛒 Building the Cart — Don't Oversell</div>
-            <p class="htp-text">
-              You can add <strong>multiple products and add-ons</strong> to the cart before completing a sale.
-              But every customer has a tolerance for how much they'll buy.
-              Push too hard and they'll walk out without buying <em>anything</em>.
-            </p>
+            <div class="htp-section-title">🛒 Know Your Customers</div>
+            <p class="htp-text">Every customer has a type that affects their budget, cart tolerance, and patience.</p>
             <div class="htp-customers">
               <div class="htp-customer-card" style="border-color:#7090A8">
                 <div class="htp-cust-emoji">👕</div>
                 <div class="htp-cust-name" style="color:#7090A8">Budget Shopper</div>
                 <div class="htp-cust-stat">Cart limit: <strong>1 item</strong></div>
-                <div class="htp-cust-desc">Just wants their one thing. Add anything extra and they'll push back.</div>
+                <div class="htp-cust-desc">Just wants their one thing. Don't add extras.</div>
               </div>
               <div class="htp-customer-card" style="border-color:#78A870">
                 <div class="htp-cust-emoji">🧥</div>
@@ -1250,7 +1246,19 @@ class UIManager {
                 <div class="htp-cust-emoji">🥻</div>
                 <div class="htp-cust-name" style="color:#A06088">High Roller</div>
                 <div class="htp-cust-stat">Cart limit: <strong>4 items</strong></div>
-                <div class="htp-cust-desc">Take everything. Pile it on — they're here to spend.</div>
+                <div class="htp-cust-desc">Here to spend. Pile it on.</div>
+              </div>
+            </div>
+            <p class="htp-text" style="margin-top:12px">You'll also encounter <strong>special customers</strong> — watch for hints in their banner:</p>
+            <div class="htp-steps">
+              <div class="htp-step"><span class="htp-step-num">🌎</span>
+                <div><strong>Tourist</strong> — Big budget (1.8×), very patient. They're splurging — give them the premium treatment.</div>
+              </div>
+              <div class="htp-step"><span class="htp-step-num">🕵️</span>
+                <div><strong>Mystery Shopper</strong> — Looks like a regular customer. Nail the service and get +5 Reputation when they reveal themselves.</div>
+              </div>
+              <div class="htp-step"><span class="htp-step-num">🎟️</span>
+                <div><strong>Couponer</strong> — Has a coupon for 20% off. Sale goes through, but revenue is reduced.</div>
               </div>
             </div>
           </div>
@@ -1260,14 +1268,50 @@ class UIManager {
             <div class="htp-section-title">⭐ Reviews & Speed</div>
             <p class="htp-text">
               Happy customers sometimes leave <strong>5-star reviews</strong>. Unhappy customers leave <strong>1-star reviews</strong>.
-              But even a successful sale can get a bad review if you took too long.
-              Speed matters — faster service = better chance of a glowing review.
+              Even a successful sale can get a bad review if you were too slow.
             </p>
             <div class="htp-steps">
               <div class="htp-step"><span class="htp-step-num">⚡</span><div><strong>Under 12 seconds</strong> — 70% chance of 5-star review</div></div>
               <div class="htp-step"><span class="htp-step-num">🕐</span><div><strong>12–25 seconds</strong> — 45% good, 5% bad</div></div>
-              <div class="htp-step"><span class="htp-step-num">🐢</span><div><strong>25–45 seconds</strong> — Even odds of good vs bad review</div></div>
-              <div class="htp-step"><span class="htp-step-num">😤</span><div><strong>Over 45 seconds</strong> — 50% chance of a 1-star even if sale succeeds</div></div>
+              <div class="htp-step"><span class="htp-step-num">🐢</span><div><strong>25–45 seconds</strong> — Even odds of good vs bad</div></div>
+              <div class="htp-step"><span class="htp-step-num">😤</span><div><strong>Over 45 seconds</strong> — 50% chance of a 1-star even if the sale went through</div></div>
+            </div>
+            <div class="htp-tip">📱 If an <strong>Influencer</strong> visits during a shift, your next 5-star review goes viral — sending +6 bonus customers next shift.</div>
+          </div>
+
+          <!-- ── RANDOM EVENTS ── -->
+          <div class="htp-section">
+            <div class="htp-section-title">⚡ Random Events</div>
+            <p class="htp-text">
+              Random events fire during shifts and are announced by a <strong>gold banner</strong> at the top of the store.
+              Some are windfalls — others are chaos. React fast.
+            </p>
+            <div class="htp-steps">
+              <div class="htp-step"><span class="htp-step-num">🔥</span><div><strong>Flash Sale / Rush Hour</strong> — Extra customers flood in. More sales, more money.</div></div>
+              <div class="htp-step"><span class="htp-step-num">⭐</span><div><strong>VIP Walk-In</strong> — A celebrity arrives with 4× the normal budget. Don't blow it.</div></div>
+              <div class="htp-step"><span class="htp-step-num">🏆</span><div><strong>Cannabis Cup Winner</strong> — 40% revenue bonus on all flower sales for the shift.</div></div>
+              <div class="htp-step"><span class="htp-step-num">🎁</span><div><strong>Vendor Sample Drop</strong> — 20% bonus on every sale until the shift ends.</div></div>
+              <div class="htp-step"><span class="htp-step-num">🚔</span><div><strong>Police Out Front</strong> — Customers get nervous and lose patience 2.5× faster. Move quickly.</div></div>
+              <div class="htp-step"><span class="htp-step-num">🔍</span><div><strong>Health Inspector</strong> — Every customer who walks out angry costs you −5 Rep. Don't let anyone leave unhappy.</div></div>
+              <div class="htp-step"><span class="htp-step-num">😤</span><div><strong>Competitor Running Deals</strong> — Steals one customer from your queue.</div></div>
+              <div class="htp-step"><span class="htp-step-num">📱</span><div><strong>Influencer In the House</strong> — Next 5-star review goes viral. +6 customers next shift.</div></div>
+            </div>
+          </div>
+
+          <!-- ── STORE UPGRADES ── -->
+          <div class="htp-section">
+            <div class="htp-section-title">🏪 Store Upgrades</div>
+            <p class="htp-text">
+              At end of day, hit <strong>Upgrade Store</strong> to make permanent improvements to your dispensary.
+              These stack and stay with you forever.
+            </p>
+            <div class="htp-steps">
+              <div class="htp-step"><span class="htp-step-num">🛋️</span><div><strong>Waiting Area Couch ($300)</strong> — Customers lose patience 40% slower. Great first buy.</div></div>
+              <div class="htp-step"><span class="htp-step-num">📺</span><div><strong>Digital Menu Board ($500)</strong> — 30% of customers automatically have their budget revealed.</div></div>
+              <div class="htp-step"><span class="htp-step-num">📷</span><div><strong>Security Camera ($400)</strong> — Police events happen 60% less often.</div></div>
+              <div class="htp-step"><span class="htp-step-num">💎</span><div><strong>Premium Display Case ($750)</strong> — High Rollers and Tourists appear twice as often.</div></div>
+              <div class="htp-step"><span class="htp-step-num">🎵</span><div><strong>Music System ($350)</strong> — Draws in 30% more curious customers.</div></div>
+              <div class="htp-step"><span class="htp-step-num">⚡</span><div><strong>Express Lane Sign ($450)</strong> — Budget shoppers only need 1 question answered.</div></div>
             </div>
           </div>
 
@@ -1276,7 +1320,7 @@ class UIManager {
             <div class="htp-section-title">🤝 Vendors — Grow Your Inventory</div>
             <p class="htp-text">
               After each day, visit the <strong>Vendor Hall</strong> to partner with suppliers.
-              Each vendor unlocks higher-tier products, more customers per day, and a reputation boost.
+              Each vendor unlocks higher-tier products and brings more customers per day.
             </p>
             <div class="htp-vendor-list">
               <div class="htp-vendor-row"><span>🌸</span><div><strong>Florist Fridays</strong> — $600. Unlocks Wedding Cake, Runtz, King Size pre-rolls.</div></div>
@@ -1292,20 +1336,22 @@ class UIManager {
           <div class="htp-section">
             <div class="htp-section-title">📣 Marketing — Fill the Store</div>
             <p class="htp-text">
-              Invest in marketing campaigns at end of day to add more customers per shift and boost reputation.
+              Invest in marketing campaigns at end of day to bring more customers per shift and boost reputation.
             </p>
-            <div class="htp-tip">💡 The Loyalty Card Program ($400) is permanent — buy it as soon as you can.</div>
+            <div class="htp-tip">💡 The Loyalty Card Program ($400) is permanent — buy it as soon as you can afford it.</div>
           </div>
 
           <!-- ── TIPS ── -->
           <div class="htp-section htp-tips-section">
             <div class="htp-section-title">🔥 Pro Tips</div>
-            <div class="htp-tip">🎯 The bonus "make it perfect" question is your secret weapon — it tells you if someone's splurging, on a hard limit, or hosting something. Always worth asking if you have patience left.</div>
-            <div class="htp-tip">✨ The effects hint often points to a smarter rec than their stated category — read it carefully before you click Make a Recommendation.</div>
-            <div class="htp-tip">😊 Watch the cart mood emoji — the moment it hits 😐 you're at the limit. One more item and you risk losing the whole sale.</div>
-            <div class="htp-tip">⚡ Speed beats perfection — a quick solid sale beats a slow perfect one when reviews are on the line.</div>
-            <div class="htp-tip">🏺 BSkone Bongs have the highest margins. The Grand Artist ($320) returns nearly $200 profit — worth unlocking BSkone Glass Works early.</div>
-            <div class="htp-tip">🔄 Returning customers are gold — check your budtender note before you start asking questions. You might already know exactly what they need.</div>
+            <div class="htp-tip">🎯 The "make it perfect" question is your secret weapon — reveals if someone's splurging, on a hard limit, or hosting something big.</div>
+            <div class="htp-tip">✨ The effects hint often points to a smarter rec than their stated category — read it before clicking Recommend.</div>
+            <div class="htp-tip">😊 Watch the cart mood emoji — the moment it hits 😐 you're at the limit. One more item risks losing the entire sale.</div>
+            <div class="htp-tip">🛋️ The Waiting Area Couch is the best early upgrade — it buys you time with every customer in the queue.</div>
+            <div class="htp-tip">🚔 When Police Out Front is active, stop asking questions and just sell. Every second counts.</div>
+            <div class="htp-tip">🔍 During a Health Inspection, never skip a customer — each walkout costs you −5 Rep.</div>
+            <div class="htp-tip">🔄 Returning customers are gold — check your budtender note before asking questions. You might already know exactly what they need.</div>
+            <div class="htp-tip">🏺 BSkone Bongs have the highest margins. The Grand Artist ($320) returns nearly $200 profit — worth unlocking early.</div>
           </div>
 
         </div><!-- /htp-body -->
