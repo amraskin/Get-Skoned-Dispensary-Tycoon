@@ -4,12 +4,13 @@
 // ============================================================
 
 const GS = {
-  MENU:      'menu',
-  PLAYING:   'playing',
-  SERVING:   'serving',
-  EOD:       'eod',
-  VENDOR:    'vendor',
-  MARKETING: 'marketing',
+  MENU:          'menu',
+  PLAYING:       'playing',
+  SERVING:       'serving',
+  EOD:           'eod',
+  VENDOR:        'vendor',
+  MARKETING:     'marketing',
+  STOREUPGRADES: 'storeupgrades',
 };
 
 class Game {
@@ -64,6 +65,16 @@ class Game {
     this._raf         = null;
     this._speechDelay = 0;
 
+    // ── Random events ──
+    this.activeEvent       = null;
+    this.nextEventIn       = 35 + Math.random() * 50; // seconds until first event
+    this.viralNextReview   = false;  // influencer event flag
+    this.inspectionActive  = false;
+    this.nextShiftBonus    = 0;      // extra customers queued for next shift
+
+    // ── Store upgrades (permanent one-time purchases) ──
+    this.storeUpgrades = new Set();
+
     // ── Audio context (simple tones) ──
     this._audioCtx  = null;
 
@@ -74,7 +85,7 @@ class Game {
   saveGame() {
     try {
       const data = {
-        version:            2,
+        version:            3,
         money:              this.money,
         day:                this.day,
         reputation:         this.reputation,
@@ -83,6 +94,7 @@ class Game {
         vendors:            this.vendors.map(v => ({ id: v.id, unlocked: v.unlocked, available: v.available })),
         activeCampaigns:    this.activeCampaigns,
         customerHistory:    this.customerHistory,
+        storeUpgrades:      [...this.storeUpgrades],
         savedAt:            Date.now(),
       };
       localStorage.setItem('get-skoned-save', JSON.stringify(data));
@@ -95,8 +107,8 @@ class Game {
       if (!raw) return false;
       const d = JSON.parse(raw);
       if (!d) return false;
-      // Accept version 1 saves (migrate) or version 2
-      if (d.version !== 1 && d.version !== 2) return false;
+      // Accept version 1/2/3 saves
+      if (![1, 2, 3].includes(d.version)) return false;
       this.money              = d.money;
       this.day                = d.day;
       this.reputation         = d.reputation;
@@ -104,6 +116,7 @@ class Game {
       this.unlockedAddonIds   = new Set(d.unlockedAddonIds   || []);
       this.activeCampaigns    = d.activeCampaigns  || [];
       this.customerHistory    = d.customerHistory  || {};
+      this.storeUpgrades      = new Set(d.storeUpgrades || []);
       (d.vendors || []).forEach(sv => {
         const v = this.vendors.find(x => x.id === sv.id);
         if (v) { v.unlocked = sv.unlocked; v.available = sv.available; }
@@ -201,11 +214,16 @@ class Game {
   }
 
   _startShift() {
-    this.shiftActive = true;
+    this.shiftActive    = true;
+    this.activeEvent    = null;
+    this.inspectionActive = false;
+    this.nextEventIn    = 35 + Math.random() * 50;
     const base  = CONFIG.game.baseCustomersPerShift;
     const extra = this._calculateCustomerBoost();
+    const bonus = this.nextShiftBonus || 0;
+    this.nextShiftBonus = 0;
     const count = Math.max(2, base + Math.floor(extra / CONFIG.game.shiftsPerDay)
-                              + Math.floor(this.reputation / 30));
+                              + Math.floor(this.reputation / 30) + bonus);
 
     // Build queue for this shift
     this.customerQueue = [];
@@ -280,9 +298,40 @@ class Game {
         }
       }
 
+      // ── Random event timer ──
+      if (this.activeEvent) {
+        if (this.activeEvent.duration > 0) {
+          this.activeEvent._remaining -= dt * 1000;
+          if (this.activeEvent._remaining <= 0) this._clearEvent();
+        }
+        // Police event: extra patience drain on waiting customers
+        if (this.activeEvent?.effect === 'patience_drain') {
+          const extra = 0.04 * (this.activeEvent.multiplier - 1);
+          this.customers
+            .filter(c => c.state === CustomerState.WAITING)
+            .forEach(c => { c.patience = Math.max(0, c.patience - extra); });
+        }
+      }
+
+      // Couch upgrade: restore 40% of base patience drain to counteract it
+      if (this.storeUpgrades.has('couch')) {
+        this.customers
+          .filter(c => c.state === CustomerState.WAITING)
+          .forEach(c => { c.patience = Math.min(100, c.patience + 0.04 * 0.4); });
+      }
+
+      if (!this.activeEvent) {
+        this.nextEventIn -= dt;
+        if (this.nextEventIn <= 0) {
+          this._triggerRandomEvent();
+          this.nextEventIn = 50 + Math.random() * 80;
+        }
+      }
+
       // Shift over — queue empty, nobody being served, all customers gone
       if (this.customerQueue.length === 0 && !this.currentCustomer && this.customers.length === 0) {
         this.shiftActive = false;
+        this._clearEvent();
         this._endShift();
       }
     }
@@ -291,24 +340,41 @@ class Game {
     if (this.state !== GS.MENU) this.ui.updateHUD();
   }
 
-  _spawnCustomer() {
-    // Pick name first so we can check history before assigning category
+  _spawnCustomer(overrideType = null) {
     const name = CUSTOMER_NAMES[Math.floor(Math.random() * CUSTOMER_NAMES.length)];
     const hist = this.customerHistory[name];
 
-    // BSkone 14-day cooldown — don't let the same person buy another bong too soon
+    // BSkone 14-day cooldown
     const excludeCats = [];
     if (hist) {
       const lastBskone = (hist.recentVisits || []).find(v => v.category === 'bskone_bongs');
-      if (lastBskone && (this.day - lastBskone.day) < 14) {
-        excludeCats.push('bskone_bongs');
-      }
+      if (lastBskone && (this.day - lastBskone.day) < 14) excludeCats.push('bskone_bongs');
     }
 
-    const c = new Customer(this.nextCustomerId++, this.canvas.width, this.canvas.height, name, excludeCats);
-    if (hist && hist.visits > 0) {
-      c.vagueDialogue = c.pickReturningDialogue(c.typeDef.type);
+    const c = new Customer(this.nextCustomerId++, this.canvas.width, this.canvas.height, name, excludeCats, overrideType);
+    if (hist && hist.visits > 0) c.vagueDialogue = c.pickReturningDialogue(c.typeDef.type);
+
+    // Celebrity event — override into ultra-VIP
+    if (this.activeEvent?.effect === 'celebrity_customer' && !this.activeEvent._celebritySpawned) {
+      this.activeEvent._celebritySpawned = true;
+      c.typeDef = { ...CUSTOMER_TYPES.find(t => t.type === 'highroller'), label: '⭐ Celebrity' };
+      c.type    = 'highroller';
+      c.budget  = c.budget * 4;
+      c.questionPatience = 1;
+      c.vagueDialogue = '✨ I heard this is THE place. Impress me.';
+      c.name = '⭐ ' + c.name;
     }
+
+    // Menu board upgrade — auto-reveal budget for 30% of customers
+    if (this.storeUpgrades.has('menu_board') && Math.random() < 0.30) {
+      c._autoRevealBudget = true;
+    }
+
+    // Express lane — budget shoppers need only 1 question
+    if (this.storeUpgrades.has('express_lane') && c.type === 'budget') {
+      c.questionPatience = 1;
+    }
+
     this.customers.push(c);
     this.todayCustomers++;
   }
@@ -337,6 +403,11 @@ class Game {
     const prevH    = this.customerHistory[customer.name] || { visits: 0 };
     const recordBad = () => {
       this.customerHistory[customer.name] = { ...prevH, satisfied: false, visits: (prevH.visits||0)+1 };
+      if (this.inspectionActive) {
+        this.reputation = Math.max(0, this.reputation - 5);
+        this.ui.showNotification('🔍 Inspector saw that walk-out! −5 Rep', 'error', 3000);
+        this.ui.updateHUD();
+      }
     };
 
     // ── Find primary product (first non-addon in cart) ─────
@@ -448,6 +519,26 @@ class Game {
 
     if (soldItems.length === 0) { this._finishSale(customer, null, null); return; }
 
+    // ── Couponer: 20% discount ─────────────────────────────
+    if (customer.typeDef.specialType === 'couponer') {
+      totalRevenue = Math.round(totalRevenue * 0.80);
+      totalProfit  = Math.round(totalProfit  * 0.80);
+    }
+
+    // ── Event revenue bonuses ──────────────────────────────
+    if (this.activeEvent?.effect === 'category_bonus' && primaryCat === this.activeEvent.category) {
+      const bonus = this.activeEvent.bonus || 0.40;
+      totalRevenue = Math.round(totalRevenue * (1 + bonus));
+      totalProfit  = Math.round(totalProfit  * (1 + bonus));
+      this.renderer.spawnSaleText(this.canvas.width/2, this.canvas.height*0.35, '🏆 Cup Winner +40%!', '#FFD700');
+    }
+    if (this.activeEvent?.effect === 'all_bonus') {
+      const bonus = this.activeEvent.bonus || 0.20;
+      totalRevenue = Math.round(totalRevenue * (1 + bonus));
+      totalProfit  = Math.round(totalProfit  * (1 + bonus));
+      this.renderer.spawnSaleText(this.canvas.width/2, this.canvas.height*0.35, '🎁 Vendor Promo +20%!', '#7AFF7A');
+    }
+
     // ── Upsell = total cart exceeds customer's budget ──────
     const isUpsell = totalRevenue > customer.budget;
 
@@ -466,8 +557,9 @@ class Game {
       this.renderer.spawnSaleText(this.canvas.width/2-60, this.canvas.height*0.45, `+${soldItems.length-1} extras!`, CONFIG.colors.brandGreen);
 
     let msg = soldItems.length === 1
-      ? `✅ Sold <strong>${primaryProduct.name}</strong> for $${primaryProduct.price}`
+      ? `✅ Sold <strong>${primaryProduct.name}</strong> for $${totalRevenue}`
       : `✅ Sold <strong>${soldItems.length} items</strong> — $${totalRevenue} total`;
+    if (customer.typeDef.specialType === 'couponer') msg += ` <span style="color:#20A860">(20% coupon applied)</span>`;
     if (isUpsell)          msg += ` — <span style="color:#C86820">Everyone's happy!</span>`;
     if (skippedNames.length) msg += ` <span style="color:#999;font-size:11px">(passed on ${skippedNames.join(', ')})</span>`;
     msg += ` | Profit: $${totalProfit.toFixed(0)}`;
@@ -475,6 +567,17 @@ class Game {
     this.ui.showNotification(msg, 'success');
     this._playTone(isUpsell ? 880 : 660);
     this._maybeShowReview(true, 0.38, elapsed);
+
+    // ── Mystery shopper reveal ─────────────────────────────
+    if (customer.typeDef.specialType === 'mystery_shopper') {
+      setTimeout(() => {
+        this.reputation = Math.min(100, this.reputation + 5);
+        this.ui.showNotification(
+          `🕵️ <strong>Mystery Shopper reveal!</strong> They were evaluating you for a franchise deal — you passed! +5 Rep`, 'success', 5000
+        );
+        this.ui.updateHUD();
+      }, 1800);
+    }
 
     const newVisit = {
       productName: primaryProduct.name,
@@ -530,14 +633,105 @@ class Game {
     else                          { goodChance = 0.08; badChance = 0.50; } // very slow
 
     const roll = Math.random();
-    if      (roll < goodChance)              this.ui.showReview(5);
-    else if (roll < goodChance + badChance)  this.ui.showReview(1);
+    if (roll < goodChance) {
+      this.ui.showReview(5);
+      // Viral review: influencer event or 8% natural chance with enthusiast/highroller
+      const isVIP = ['enthusiast','highroller'].includes(customer.type);
+      if (this.viralNextReview || (isVIP && Math.random() < 0.08)) {
+        this.viralNextReview = false;
+        this.nextShiftBonus += 6;
+        setTimeout(() => {
+          this.ui.showNotification('📱 <strong>That review went viral!</strong> +6 extra customers next shift!', 'success', 5000);
+        }, 2000);
+      }
+    } else if (roll < goodChance + badChance) {
+      this.ui.showReview(1);
+    }
   }
 
   _finishSale(customer, product, addon) {
     this.currentCustomer = null;
     this.state = GS.PLAYING;
     this.ui.showOnly(null);
+    this.ui.updateHUD();
+  }
+
+  // ─── Random event system ─────────────────────────────────
+  _triggerRandomEvent() {
+    if (this.activeEvent) return;
+
+    // Filter events by conditions
+    let pool = [...RANDOM_EVENTS];
+
+    // Security cam reduces police events
+    if (this.storeUpgrades.has('security_cam')) {
+      pool = pool.filter(e => e.id !== 'police_outside' || Math.random() > 0.60);
+    }
+    // Competitor only shows after day 3
+    if (this.day < 4) pool = pool.filter(e => e.id !== 'competitor_steal');
+
+    if (pool.length === 0) return;
+    const event = pool[Math.floor(Math.random() * pool.length)];
+    this.activeEvent = { ...event, _remaining: event.duration };
+
+    // Immediate effects
+    if (event.effect === 'spawn_extra') {
+      for (let i = 0; i < event.count; i++) {
+        this.customerQueue.push({ delay: this.serveTimer + 1 + i * 2 });
+      }
+      this.activeEvent = null; // instant event, no banner needed after
+    } else if (event.effect === 'steal_customer') {
+      const waiting = this.customers.find(c => c.state === CustomerState.WAITING);
+      if (waiting) {
+        waiting.serve(false);
+      } else if (this.customerQueue.length > 0) {
+        this.customerQueue.pop();
+      }
+      this.activeEvent = null;
+    } else if (event.effect === 'viral_next_review') {
+      this.viralNextReview = true;
+    } else if (event.effect === 'inspection') {
+      this.inspectionActive = true;
+    }
+
+    // Show event banner for timed events
+    if (this.activeEvent) {
+      this.ui.showEventBanner(this.activeEvent);
+    }
+
+    // Spawn extra customers for flash-sale-style events — handled above already
+    // For instant events (null activeEvent), just show a notification
+    if (!this.activeEvent) {
+      this.ui.showNotification(`${event.name} — ${event.desc}`, 'warning', 4000);
+    }
+  }
+
+  _clearEvent() {
+    if (!this.activeEvent) return;
+    this.inspectionActive = false;
+    this.activeEvent = null;
+    this.ui.clearEventBanner();
+  }
+
+  // ─── Store upgrades ───────────────────────────────────────
+  showStoreUpgrades() {
+    this.state = 'storeupgrades';
+    this.ui.renderStoreUpgrades(STORE_UPGRADES, this.storeUpgrades, this.money);
+  }
+
+  purchaseUpgrade(upgradeId) {
+    const upgrade = STORE_UPGRADES.find(u => u.id === upgradeId);
+    if (!upgrade) return;
+    if (this.storeUpgrades.has(upgradeId)) return;
+    if (this.money < upgrade.cost) {
+      this.ui.showNotification(`💸 Need $${upgrade.cost} — you only have $${Math.floor(this.money)}`, 'error');
+      return;
+    }
+    this.money -= upgrade.cost;
+    this.storeUpgrades.add(upgradeId);
+    this.saveGame();
+    this.ui.showNotification(`${upgrade.icon} <strong>${upgrade.name}</strong> installed! ${upgrade.perk}`, 'success', 4000);
+    setTimeout(() => this.ui.renderStoreUpgrades(STORE_UPGRADES, this.storeUpgrades, this.money), 400);
     this.ui.updateHUD();
   }
 

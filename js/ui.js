@@ -13,7 +13,7 @@ class UIManager {
   // ─── Build all panels ─────────────────────────────────────
   _init() {
     // Collect panel references
-    ['menu','hud','service','eod','vendor','marketing','notification','howtoplay','review','leaderboard']
+    ['menu','hud','service','eod','vendor','marketing','notification','howtoplay','review','leaderboard','storeupgrades']
       .forEach(id => { this.panels[id] = document.getElementById(`panel-${id}`); });
   }
 
@@ -369,6 +369,31 @@ class UIManager {
     footer.innerHTML = `
       <button class="btn btn-brand sp-sell-btn" id="btn-make-rec">🛍️ Make a Recommendation →</button>
     `;
+
+    // Menu board upgrade: auto-reveal budget
+    if (customer._autoRevealBudget && !this._revealed.budget) {
+      this._revealed.budget = true;
+      const budgetBtn = document.getElementById('q-budget');
+      if (budgetBtn) { budgetBtn.classList.add('asked'); budgetBtn.textContent = `💰 Budget: around $${customer.budget} (menu board)`; }
+    }
+
+    // Tourist badge
+    if (customer.typeDef.specialType === 'tourist') {
+      const label = body.querySelector('.sp-convo-label');
+      if (label) label.insertAdjacentHTML('beforebegin', '<div class="sp-auto-reveal">🧳 <em>First time at a dispensary — they\'re excited and open to anything!</em></div>');
+    }
+
+    // Mystery shopper subtle hint
+    if (customer.typeDef.specialType === 'mystery_shopper') {
+      const label = body.querySelector('.sp-convo-label');
+      if (label) label.insertAdjacentHTML('beforebegin', '<div class="sp-auto-reveal" style="border-color:#888;background:#f8f8ff">🕵️ <em>Something feels slightly off about this customer...</em></div>');
+    }
+
+    // Couponer hint
+    if (customer.typeDef.specialType === 'couponer') {
+      const label = body.querySelector('.sp-convo-label');
+      if (label) label.insertAdjacentHTML('beforebegin', '<div class="sp-auto-reveal" style="border-color:#20A860;background:#f0fff4">✂️ <em>They\'re using a discount code — 20% off, but they\'ll come back often!</em></div>');
+    }
 
     // Seed clues with what's already known (category always known)
     this._updateClues(customer, history);
@@ -769,6 +794,82 @@ class UIManager {
     this._reviewTimer = setTimeout(() => { panel.style.display = 'none'; }, 4000);
   }
 
+  // ─── Event banner ─────────────────────────────────────────
+  showEventBanner(event) {
+    let banner = document.getElementById('event-banner');
+    if (!banner) return;
+    banner.innerHTML = `
+      <span class="event-banner-name">${event.name}</span>
+      <span class="event-banner-desc">${event.desc}</span>
+      ${event.duration > 0 ? `<span class="event-banner-timer" id="event-banner-timer"></span>` : ''}
+    `;
+    banner.style.display = 'flex';
+    clearInterval(this._eventTimerInterval);
+    if (event.duration > 0) {
+      const end = Date.now() + event.duration;
+      this._eventTimerInterval = setInterval(() => {
+        const rem = Math.max(0, Math.ceil((end - Date.now()) / 1000));
+        const el = document.getElementById('event-banner-timer');
+        if (el) el.textContent = `${rem}s`;
+        if (rem <= 0) clearInterval(this._eventTimerInterval);
+      }, 500);
+    }
+  }
+
+  clearEventBanner() {
+    clearInterval(this._eventTimerInterval);
+    const banner = document.getElementById('event-banner');
+    if (banner) banner.style.display = 'none';
+  }
+
+  // ─── Store upgrades panel ─────────────────────────────────
+  renderStoreUpgrades(upgrades, owned, money) {
+    const panel = this.panels.storeupgrades;
+    if (!panel) return;
+
+    panel.innerHTML = `
+      <div class="vendor-modal">
+        <div class="vendor-modal-header">
+          <h2>🏪 Upgrade Your Store</h2>
+          <div class="vendor-cash">Cash: <strong>$${Math.floor(money)}</strong></div>
+        </div>
+        <div class="vendor-list">
+          ${upgrades.map(u => {
+            const isOwned = owned.has(u.id);
+            const canAfford = money >= u.cost;
+            return `
+              <div class="vendor-card ${isOwned ? 'vendor-card-owned' : ''}">
+                <div class="vendor-avatar">${u.icon}</div>
+                <div class="vendor-info">
+                  <div class="vendor-name">${u.name} ${isOwned ? '<span class="vendor-badge-owned">✓ Installed</span>' : ''}</div>
+                  <div class="vendor-tagline">${u.desc}</div>
+                  <div class="vendor-perks"><span class="vendor-perk-chip">⚡ ${u.perk}</span></div>
+                </div>
+                <div class="vendor-action">
+                  <div class="vendor-cost">$${u.cost}</div>
+                  ${isOwned
+                    ? `<button class="btn btn-disabled" disabled>Installed</button>`
+                    : `<button class="btn ${canAfford ? 'btn-brand' : 'btn-disabled'}"
+                         ${canAfford ? '' : 'disabled'}
+                         onclick="window.game.purchaseUpgrade('${u.id}')">
+                         Install
+                       </button>`
+                  }
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+        <div style="text-align:center;margin-top:16px">
+          <button class="btn btn-secondary" id="btn-back-from-upgrades">← Back to Summary</button>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('btn-back-from-upgrades')?.addEventListener('click', () => this.game.showEOD());
+    this.showOnly('storeupgrades');
+  }
+
   // ─── End-of-day panel ─────────────────────────────────────
   renderEOD(stats) {
     const panel = this.panels.eod;
@@ -813,15 +914,10 @@ class UIManager {
         </div>
 
         <div class="eod-actions">
-          <button class="btn btn-brand" id="btn-visit-vendors">
-            🤝 Visit Vendors
-          </button>
-          <button class="btn btn-secondary" id="btn-open-marketing">
-            📣 Marketing
-          </button>
-          <button class="btn btn-primary" id="btn-next-day">
-            Next Day →
-          </button>
+          <button class="btn btn-brand" id="btn-visit-vendors">🤝 Vendors</button>
+          <button class="btn btn-secondary" id="btn-open-marketing">📣 Marketing</button>
+          <button class="btn btn-secondary" id="btn-store-upgrades">🏪 Upgrade Store</button>
+          <button class="btn btn-primary" id="btn-next-day">Next Day →</button>
         </div>
 
         <div class="eod-leaderboard-section">
@@ -843,6 +939,7 @@ class UIManager {
 
     document.getElementById('btn-visit-vendors')?.addEventListener('click', () => this.game.showVendors());
     document.getElementById('btn-open-marketing')?.addEventListener('click', () => this.game.showMarketing());
+    document.getElementById('btn-store-upgrades')?.addEventListener('click', () => this.game.showStoreUpgrades());
     document.getElementById('btn-next-day')?.addEventListener('click', () => this.game.startDay());
     document.getElementById('btn-view-lb')?.addEventListener('click', () => this.renderLeaderboard('eod'));
 

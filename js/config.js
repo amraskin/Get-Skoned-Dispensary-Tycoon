@@ -323,10 +323,10 @@ const CUSTOMER_TYPES = [
     upsellChance: 0.05,
     addonChance: 0.15,
     budgetMultiplier: 0.8,
-    cartTolerance: 1,   // just wants their one thing
+    cartTolerance: 1,
     color: '#7090A8',
     outfits: ['👕', '🧢'],
-    frequency: 0.30,
+    frequency: 0.26,
   },
   {
     type: 'curious',
@@ -335,10 +335,10 @@ const CUSTOMER_TYPES = [
     upsellChance: 0.40,
     addonChance: 0.45,
     budgetMultiplier: 1.2,
-    cartTolerance: 2,   // open to one extra
+    cartTolerance: 2,
     color: '#78A870',
     outfits: ['🧥', '👒'],
-    frequency: 0.35,
+    frequency: 0.29,
   },
   {
     type: 'enthusiast',
@@ -347,10 +347,10 @@ const CUSTOMER_TYPES = [
     upsellChance: 0.65,
     addonChance: 0.60,
     budgetMultiplier: 1.6,
-    cartTolerance: 3,   // loves building a haul
+    cartTolerance: 3,
     color: '#A07840',
     outfits: ['🥼', '🎩'],
-    frequency: 0.25,
+    frequency: 0.22,
   },
   {
     type: 'highroller',
@@ -359,10 +359,49 @@ const CUSTOMER_TYPES = [
     upsellChance: 0.90,
     addonChance: 0.75,
     budgetMultiplier: 2.2,
-    cartTolerance: 4,   // take everything
+    cartTolerance: 4,
     color: '#A06088',
     outfits: ['🥻', '🎓'],
-    frequency: 0.10,
+    frequency: 0.09,
+  },
+  {
+    type: 'tourist',
+    label: 'Tourist 🧳',
+    desc: 'First time at a dispensary — clueless but excited and has money to spend.',
+    upsellChance: 0.75,
+    addonChance: 0.60,
+    budgetMultiplier: 1.8,
+    cartTolerance: 3,
+    color: '#E07820',
+    outfits: ['🧳', '📸'],
+    frequency: 0.06,
+    specialType: 'tourist',
+  },
+  {
+    type: 'mystery_shopper',
+    label: 'Customer',
+    desc: 'Looks like a regular. Actually evaluating your store for a franchise deal.',
+    upsellChance: 0.35,
+    addonChance: 0.40,
+    budgetMultiplier: 1.1,
+    cartTolerance: 2,
+    color: '#6060A8',
+    outfits: ['🕵️', '🥸'],
+    frequency: 0.02,
+    specialType: 'mystery_shopper',
+  },
+  {
+    type: 'couponer',
+    label: 'Deal Hunter ✂️',
+    desc: 'Has discount codes and wants maximum value. Gets 20% off but comes back often.',
+    upsellChance: 0.20,
+    addonChance: 0.55,
+    budgetMultiplier: 0.9,
+    cartTolerance: 2,
+    color: '#20A860',
+    outfits: ['✂️', '🧾'],
+    frequency: 0.06,
+    specialType: 'couponer',
   },
 ];
 
@@ -397,6 +436,24 @@ const CUSTOMER_DIALOGUES = {
     "Show me your finest.",
     "Money is no object — quality is.",
     "I heard you carry exclusive products?",
+  ],
+  tourist: [
+    "Oh wow, an actual dispensary! So cool!",
+    "First time here — what do people usually get?",
+    "We're visiting and my friend said this is THE place!",
+    "This is so different from back home!",
+  ],
+  mystery_shopper: [
+    "Just looking for something good today.",
+    "A friend recommended you guys.",
+    "Heard this place had a solid selection.",
+    "Nothing specific in mind, just browsing.",
+  ],
+  couponer: [
+    "I've got some credits saved up — let's use them!",
+    "Do you honor any discount codes today?",
+    "App said there's a deal here somewhere...",
+    "I always find the best value at Skones.",
   ],
 };
 
@@ -435,6 +492,21 @@ const CUSTOMER_RETURNING_DIALOGUES = {
     "Back for the premium experience.",
     "You've earned a loyal customer.",
     "Only place I come to now.",
+  ],
+  tourist: [
+    "We're back! Loved it last time!",
+    "Came back before our flight — one more time!",
+    "Told everyone at home about this place!",
+  ],
+  mystery_shopper: [
+    "Back for another visit.",
+    "Checking in again.",
+    "Just popping by.",
+  ],
+  couponer: [
+    "Got more credits — let's go!",
+    "Back for the deals, as always.",
+    "You keep bringing me back with these prices.",
   ],
 };
 
@@ -501,6 +573,33 @@ const CATEGORY_EFFECT_HINTS = {
     "A friend has one of your bongs. I've been thinking about getting one.",           // standard
   ],
 };
+
+// ============================================================
+//  RANDOM EVENTS — fire during shifts for chaos & fun
+// ============================================================
+const RANDOM_EVENTS = [
+  { id: 'flash_sale',        name: '🔥 Flash Sale!',             desc: 'Word got out — 4 extra customers incoming this shift!',                        duration: 0,     effect: 'spawn_extra',     count: 4 },
+  { id: 'rush_hour',         name: '⚡ Rush Hour!',              desc: 'The concert just let out — 3 extra customers heading your way!',                 duration: 0,     effect: 'spawn_extra',     count: 3 },
+  { id: 'celebrity',         name: '⭐ VIP Walk-In!',            desc: 'A celebrity just entered. Big spender — but no patience. Serve them fast!',      duration: 28000, effect: 'celebrity_customer' },
+  { id: 'police_outside',    name: '🚔 Police Out Front',        desc: 'Cop car parked outside — customers are nervous and losing patience fast!',        duration: 22000, effect: 'patience_drain',   multiplier: 2.5 },
+  { id: 'cannabis_cup',      name: '🏆 Cannabis Cup Winner!',    desc: "Your flower just won the Cup! All flower revenue +40% this shift.",              duration: -1,    effect: 'category_bonus',   category: 'flower', bonus: 0.40 },
+  { id: 'vendor_promo',      name: '🎁 Vendor Sample Drop!',     desc: 'Your vendor dropped off samples — all products sell for +20% this shift.',        duration: -1,    effect: 'all_bonus',        bonus: 0.20 },
+  { id: 'health_inspector',  name: '🔍 Health Inspector!',       desc: 'Inspector on premises. Any customer walks out = −5 rep. Serve cleanly!',          duration: 40000, effect: 'inspection' },
+  { id: 'competitor_steal',  name: "😤 Competitor Running Deals!", desc: "Bud's Bargain Basement just posted a promo — one customer left your queue.",   duration: 0,     effect: 'steal_customer' },
+  { id: 'influencer_visit',  name: '📱 Influencer in the House!', desc: 'A local influencer is filming. Next 5-star review goes viral — +6 bonus customers!', duration: -1, effect: 'viral_next_review' },
+];
+
+// ============================================================
+//  STORE UPGRADES — permanent one-time purchases
+// ============================================================
+const STORE_UPGRADES = [
+  { id: 'couch',        name: 'Waiting Area Couch',   icon: '🛋️', cost: 300,  desc: 'Comfy seating — customers lose patience 40% slower.',              perk: 'Patience -40%'             },
+  { id: 'menu_board',   name: 'Digital Menu Board',   icon: '📺', cost: 500,  desc: 'Deals on display — 30% of customers auto-reveal their budget.',      perk: 'Budget auto-revealed 30%'  },
+  { id: 'security_cam', name: 'Security Camera',      icon: '📷', cost: 400,  desc: 'Visible cam deters trouble — police events 60% less likely.',        perk: 'Police events −60%'        },
+  { id: 'display_case', name: 'Premium Display Case', icon: '💎', cost: 750,  desc: 'Premium products beautifully showcased — High Rollers visit 2× more.', perk: 'High Rollers ×2'         },
+  { id: 'music_system', name: 'Music System',         icon: '🎵', cost: 350,  desc: 'Chill vibes attract explorers — Curious customers +30% more often.',  perk: 'Curious customers +30%'   },
+  { id: 'express_lane', name: 'Express Lane Sign',    icon: '⚡', cost: 450,  desc: 'Budget shoppers get a fast lane — serve them with 1 fewer question.', perk: 'Budget customers: 1 question only' },
+];
 
 // ============================================================
 //  MISC HINTS — bonus clue revealed by 3rd question

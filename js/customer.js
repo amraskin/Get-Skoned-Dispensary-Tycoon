@@ -15,8 +15,8 @@ const CustomerState = {
 };
 
 class Customer {
-  constructor(id, canvasWidth, canvasHeight, name = null, excludeCats = []) {
-    const typeDef = this.pickType();
+  constructor(id, canvasWidth, canvasHeight, name = null, excludeCats = [], overrideType = null) {
+    const typeDef = this.pickType(overrideType);
     const customerName = name || CUSTOMER_NAMES[Math.floor(Math.random() * CUSTOMER_NAMES.length)];
     const cat     = this.pickCategory(excludeCats);
 
@@ -89,7 +89,11 @@ class Customer {
     return Object.keys(weights)[0];
   }
 
-  pickType() {
+  pickType(overrideType = null) {
+    if (overrideType) {
+      const found = CUSTOMER_TYPES.find(t => t.type === overrideType);
+      if (found) return found;
+    }
     const r = Math.random();
     let cumulative = 0;
     for (const t of CUSTOMER_TYPES) {

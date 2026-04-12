@@ -605,7 +605,7 @@ body {
 }
 
 /* ─── Modal Panels (vendor / marketing / leaderboard) ───── */
-#panel-vendor, #panel-marketing, #panel-leaderboard {
+#panel-vendor, #panel-marketing, #panel-leaderboard, #panel-storeupgrades {
   position: absolute;
   inset: 0;
   background: rgba(0,0,0,0.65);
@@ -1772,4 +1772,118 @@ button, .product-card, .addon-card, .vendor-card,
   margin: 4px 0;
   white-space: pre-wrap;
   word-break: break-all;
+}
+
+/* ─── Random Event Banner ────────────────────────────────── */
+#event-banner {
+  position: absolute;
+  top: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, rgba(20,10,0,0.92), rgba(60,30,0,0.92));
+  border: 2px solid rgba(255,180,20,0.7);
+  border-radius: 12px;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 90;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5), 0 0 18px rgba(255,160,0,0.25);
+  animation: eventSlideIn 0.3s ease;
+  white-space: nowrap;
+}
+
+@keyframes eventSlideIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(-12px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.event-banner-name {
+  font-size: 14px;
+  font-weight: 800;
+  color: #FFD060;
+  letter-spacing: 0.3px;
+}
+
+.event-banner-desc {
+  font-size: 12px;
+  color: rgba(255,255,255,0.75);
+}
+
+.event-banner-timer {
+  font-size: 13px;
+  font-weight: 700;
+  color: #FF9020;
+  min-width: 30px;
+  text-align: right;
+}
+
+/* ─── Store Upgrade Card extras ─────────────────────────── */
+.vendor-card-owned {
+  border-color: #2A6040;
+  background: #F4FBF6;
+  opacity: 0.85;
+}
+
+.vendor-badge-owned {
+  font-size: 11px;
+  font-weight: 700;
+  color: #2A6040;
+  background: #DFF5E8;
+  padding: 2px 7px;
+  border-radius: 4px;
+  margin-left: 6px;
+}
+
+.vendor-cost {
+  font-size: 17px;
+  font-weight: 800;
+  color: #2A6040;
+  margin-bottom: 6px;
+  text-align: center;
+}
+
+.vendor-perk-chip {
+  display: inline-block;
+  font-size: 11px;
+  background: #EEF8F2;
+  color: #2A6040;
+  border: 1px solid #B8E8CC;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-weight: 600;
+}
+
+/* vendor-modal used by store upgrades panel */
+.vendor-modal {
+  background: #FAFAF8;
+  border-radius: 16px;
+  width: 880px;
+  max-height: 90%;
+  overflow-y: auto;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+  display: flex;
+  flex-direction: column;
+}
+
+.vendor-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 28px 16px;
+  border-bottom: 1px solid #E8E4E0;
+  flex-shrink: 0;
+}
+.vendor-modal-header h2 { font-size: 22px; font-weight: 800; }
+.vendor-cash { font-size: 16px; color: #444; }
+.vendor-cash strong { color: #2A8A50; font-size: 18px; }
+
+.vendor-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 24px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
